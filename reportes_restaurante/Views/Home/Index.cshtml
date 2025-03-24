@@ -2,7 +2,58 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div>
+    <a href="/" class="btn text-black" style="background-color: #ffd734">DASHBOARD</a>
+    <a href="/" class="btn text-black" style="background-color: #ffd734">PEDIDOS</a>
 </div>
+<div class="text-center">
+    <h3 class="display-4 fs-2">DETALLES DE PEDIDOS Y MESAS</h3>
+    <p>
+        <button id="btnMesas" class="btn text-light w-50" style="background-color: #af1717">Ver Detalle de Mesas</button>
+    </p>
+    <p>
+        <button id="btnPedidos" class="btn text-light w-50" style="background-color: #af1717">Ver Detalle de Pedidos</button>
+    </p>
+    <p>
+        <a href="/" class="btn text-light w-50" style="background-color: #af1717">Limpiar</a>
+    </p>
+</div>
+
+
+<div id="contenidoDetalles"></div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script type="text/javascript">
+        // Cuando se haga clic en el botón "Ver Detalle de Mesas"
+        $("#btnMesas").click(function () {
+            $.ajax({
+                url: '@Url.Action("DetalleMesas", "Home")',
+                type: 'GET',
+                success: function (data) {
+                    // Cargar la vista parcial en el div
+                    $('#contenidoDetalles').html(data);
+                },
+                error: function () {
+                    alert('Error al cargar los detalles de mesas.');
+                }
+            });
+        });
+
+        // Cuando se haga clic en el botón "Ver Detalle de Pedidos"
+        $("#btnPedidos").click(function () {
+            $.ajax({
+                url: '@Url.Action("DetallePedidos", "Home")',
+                type: 'GET',
+                success: function (data) {
+                    // Cargar la vista parcial en el div
+                    $('#contenidoDetalles').html(data);
+                },
+                error: function () {
+                    alert('Error al cargar los detalles de pedidos.');
+                }
+            });
+        });
+    </script>
+}
