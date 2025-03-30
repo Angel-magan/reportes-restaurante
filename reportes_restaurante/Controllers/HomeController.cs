@@ -25,12 +25,12 @@ namespace reportes_restaurante.Controllers
 
         public ActionResult DetalleMesas()
         {
-            return PartialView("~/Views/DetalleMesasPedidos/_DetalleMesas.cshtml");  // Vista parcial para mesas
+            return PartialView("~/Views/DetalleMesasPedidos/_DetalleMesas.cshtml"); 
         }
 
         public ActionResult DetallePedidos()
         {
-            return PartialView("~/Views/DetalleMesasPedidos/_DetallePedidos.cshtml");  // Vista parcial para pedidos
+            return PartialView("~/Views/DetalleMesasPedidos/_DetallePedidos.cshtml");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
