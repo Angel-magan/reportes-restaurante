@@ -1,0 +1,66 @@
+﻿@{
+    ViewData["Title"] = "Reportes";
+}
+
+<div>
+    <section class="d-flex justify-content-between align-items-center p-2" style="background-color: #fbfdf0">
+        <div>
+            <a href="/" class="btn text-black mb-2" style="background-color: #ffd734">DASHBOARD</a>
+            <a href="@Url.Action("DashboardReportes", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">PEDIDOS</a>
+        </div>
+        <div class="d-flex flex-md-row flex-column align-items-md-center justify-content-between">
+            <div class="d-flex flex-column flex-md-row me-md-3 w-100 w-md-auto">
+                <div class="me-md-3 mb-2 mb-md-0">
+                    <label for="fechaInicio">Fecha inicio:</label>
+                    <input type="date" id="fechaInicio" name="fechaInicio" class="form-control">
+                </div>
+                <div>
+                    <label for="fechaFin">Fecha fin:</label>
+                    <input type="date" id="fechaFin" name="fechaFin" class="form-control">
+                </div>
+            </div>
+            <div class="d-flex flex-column flex-md-row gap-2 mt-3 mt-md-0">
+                <button id="btnMensual" class="btn text-light" style="background-color: #af1717">Mensual</button>
+                <button id="btnSemanal" class="btn text-light" style="background-color: #af1717">Semanal</button>
+                <button id="btnHoy" class="btn text-light" style="background-color: #af1717">Hoy</button>
+            </div>
+        </div>
+    </section>
+    <section class="mt-5 px-2">
+        <p class="border border-dark border-2 text-center p-2 w-25 mb-0">Reportes</p>
+        <hr class="mt-0" style="height: 2px">
+        <button id="btnVentasLocales" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas locales</button>
+        <button id="btnVentasLinea" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas en linea</button>
+        <button id="btnVentasTotales" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas totales</button>
+        <hr style="height: 2px" />
+    </section>
+    <section class="d-flex justify-content-around align-items-center px-2">
+        <div>
+            <div class="border  border-2 p-3 mb-3">
+                <p class="fw-bold">Cantidad de registros: <span>#</span></p>
+            </div>
+            <div class="border  border-2 p-3">
+                <p class="fw-bold">Total vendido: $<span>0.00</span></p>
+            </div>
+        </div>
+        <div class="border  border-2 p-3 ms-3">
+            <p class="fw-bold">Apartado para reportes que requieren parámetros</p>
+            <input type="text" class="w-100 mb-3" placeholder="campo requerido para algún reporte" />
+            <input type="text" class="w-100 mt-2" placeholder="campo requerido para algún reporte" />
+        </div>
+    </section>
+    <section class="mt-5 px-2">
+        <p class="border border-dark border-2 text-center p-2 w-25 mb-0">Gráficos</p>
+        <hr class="mt-0" style="height: 2px">
+        <div class="d-flex justify-content-around align-items-center">
+            <div class="border  border-2 p-3 ms-3">
+                <h3>Aquí agregar el first gráfico</h3>
+            </div>
+            <div class="border  border-2 p-3 ms-3">
+                <h3>Aquí agregar el second gráfico</h3>
+            </div>
+        </div>
+        <hr style="height: 2px" />
+    </section>
+    <button id="btnDescargarPdf" class="btn text-light mb-2 d-block mx-auto" style="background-color: #af1717">Descargar PDF</button>
+</div>
