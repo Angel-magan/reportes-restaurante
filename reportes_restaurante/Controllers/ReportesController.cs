@@ -1,9 +1,12 @@
 ﻿using DinkToPdf;
 using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using reportes_restaurante.Models;
 using System.Data;
-using System.Text;
 
 
 
@@ -139,44 +142,45 @@ namespace reportes_restaurante.Controllers
             }
         }
 
+        //Ahorita se agrego para vista de pdf***********
         private string GenerarHtmlParaPdf(dynamic datosFiltrados)
         {
-            var ventas = datosFiltrados.ventas;
-            var cantidadVentas = datosFiltrados.cantidadVentas;
-            var totalVendido = datosFiltrados.totalVendido;
-
-            var html = new StringBuilder();
-            html.Append("<html>");
-            html.Append("<head>");
-            html.Append("<style>");
-            html.Append("table { width: 100%; border-collapse: collapse; }");
-            html.Append("th, td { border: 1px solid black; padding: 8px; text-align: left; }");
-            html.Append("th { background-color: #f2f2f2; }");
-            html.Append("</style>");
-            html.Append("</head>");
-            html.Append("<body>");
-            html.Append("<h1>Reporte de Ventas</h1>");
-            html.Append($"<p><strong>Cantidad de Ventas:</strong> {cantidadVentas}</p>");
-            html.Append($"<p><strong>Total Vendido:</strong> ${totalVendido:F2}</p>");
-            html.Append("<table>");
-            html.Append("<tr><th>Periodo</th><th>Total Vendido</th><th>Cantidad de Ventas</th></tr>");
-
-            foreach (var venta in ventas)
-            {
-                html.Append("<tr>");
-                html.Append($"<td>{venta.Periodo}</td>");
-                html.Append($"<td>${venta.TotalVendido:F2}</td>");
-                html.Append($"<td>{venta.CantidadVentas}</td>");
-                html.Append("</tr>");
-            }
-
-            html.Append("</table>");
-            html.Append("</body>");
-            html.Append("</html>");
-
-            return html.ToString();
+            var htmlContent = RenderViewToString("ReporteVentasPdf", datosFiltrados);
+            return htmlContent;
         }
+        private string RenderViewToString(string viewName, object model)
+        {
+            var viewEngine = HttpContext.RequestServices.GetService(typeof(IRazorViewEngine)) as IRazorViewEngine;
+            var tempDataProvider = HttpContext.RequestServices.GetService(typeof(ITempDataProvider)) as ITempDataProvider;
+            var actionContext = new ActionContext(HttpContext, RouteData, ControllerContext.ActionDescriptor);
 
+            using (var sw = new StringWriter())
+            {
+                var viewResult = viewEngine.FindView(actionContext, viewName, false);
+
+                if (viewResult.View == null)
+                {
+                    throw new ArgumentNullException($"View {viewName} not found");
+                }
+
+                var viewDictionary = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
+                {
+                    Model = model
+                };
+
+                var viewContext = new ViewContext(
+                    actionContext,
+                    viewResult.View,
+                    viewDictionary,
+                    new TempDataDictionary(actionContext.HttpContext, tempDataProvider),
+                    sw,
+                    new HtmlHelperOptions()
+                );
+
+                viewResult.View.RenderAsync(viewContext).GetAwaiter().GetResult();
+                return sw.GetStringBuilder().ToString();
+            }
+        }
         private dynamic ObtenerDatosFiltrados(int? year, DateTime? fechaInicio, DateTime? fechaFin, string tipoVenta, string periodo, string nombreEmpleado)
         {
             IQueryable<Factura> query = _context.Factura.AsQueryable();
@@ -250,7 +254,7 @@ namespace reportes_restaurante.Controllers
             var cantidadVentas = query.Count();
             var totalVendido = query.Sum(v => v.total);
 
-            return new { ventas, cantidadVentas, totalVendido };
+            return new { ventas, cantidadVentas, totalVendido, tipoVenta };
         }
     }
 }
