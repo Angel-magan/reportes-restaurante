@@ -1,0 +1,265 @@
+﻿@{
+    ViewData["Title"] = "Reportes";
+}
+<head>
+    <!-- Otros enlaces de cabecera y recursos -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  <!-- Cargar jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<div>
+    <section class="d-flex justify-content-between align-items-center p-2" style="background-color: #fbfdf0">
+        <div>
+            <a href="/" class="btn text-black mb-2" style="background-color: #ffd734">DASHBOARD</a>
+            <a href="@Url.Action("DashboardReportes", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">PEDIDOS</a>
+        </div>
+        <div class="d-flex flex-md-row flex-column align-items-md-center justify-content-between">
+            <div class="d-flex flex-column flex-md-row me-md-3 w-100 w-md-auto">
+                <div class="me-md-3 mb-2 mb-md-0">
+                    <label for="fechaInicio">Fecha inicio:</label>
+                    <input type="date" id="fechaInicio" name="fechaInicio" class="form-control">
+                </div>
+                <div>
+                    <label for="fechaFin">Fecha fin:</label>
+                    <input type="date" id="fechaFin" name="fechaFin" class="form-control">
+                </div>
+            </div>
+            <div class="d-flex flex-column flex-md-row gap-2 mt-3 mt-md-0">
+                <button id="btnMensual" class="btn text-light" style="background-color: #af1717">Mensual</button>
+                <button id="btnSemanal" class="btn text-light" style="background-color: #af1717">Semanal</button>
+                <button id="btnHoy" class="btn text-light" style="background-color: #af1717">Diario</button>
+            </div>
+        </div>
+    </section>
+    <h3 id="tituloPeriodo" class="my-3 text-center">Reportes mensuales</h3>
+    <section class="px-2">
+        <p class="border border-dark border-2 text-center p-2 w-25 mb-0">Reportes</p>
+        <hr class="mt-0" style="height: 2px">
+        <button id="btnVentasLocales" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas locales</button>
+        <button id="btnVentasLinea" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas en linea</button>
+        <button id="btnVentasTotales" class="btn text-light w-100 mb-2" style="background-color: #af1717">Ventas totales</button>
+        <hr style="height: 2px" />
+    </section>
+    <h3 id="tituloVentas" class="text-center">Ventas locales</h3>
+    <section class="d-flex justify-content-around align-items-center px-2">
+        <div>
+            <div class="border  border-2 p-3 mb-3">
+                <p class="fw-bold">Cantidad ventas: <span>#</span></p>
+            </div>
+            <div class="border  border-2 p-3">
+                <p class="fw-bold">Total vendido: $<span>0.00</span></p>
+            </div>
+        </div>
+        <div class="border  border-2 p-3 ms-3">
+            <p class="fw-bold">Ver ventas de un año en especifico</p>
+            <input type="text" id="inputYear" class="w-100 mb-3" placeholder="Ingrese año" />
+            <p class="fw-bold">Ver ventas de un empleado en especifico</p>
+            <input type="text" id="nombreEmpleado" class="w-100 mb-3" placeholder="Ingrese nombre del empleado" />
+        </div>
+    </section>
+    <section class="mt-5 px-2">
+        <p class="border border-dark border-2 text-center p-2 w-25 mb-0">Gráficos</p>
+        <hr class="mt-0" style="height: 2px">
+        <div class="d-flex justify-content-around align-items-center">
+            <div class="border  border-2 p-3 ms-3">
+                <h3 class="text-center">Ventas por mes</h3>
+                <canvas id="graficoVentas"></canvas>
+            </div>
+            <div class="border  border-2 p-3 ms-3">
+                <h3 class="text-center">Cantidad de ventas</h3>
+                <canvas id="graficoCantidadVentas"></canvas>
+            </div>
+        </div>
+        <hr style="height: 2px" />
+    </section>
+    <button id="btnDescargarPdf" class="btn text-light mb-2 d-block mx-auto" style="background-color: #af1717">Descargar PDF</button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var chartInstance;
+        var barChartInstance;
+        var tipoVentaSeleccionado = 'LOCAL'; // Tipo de venta por defecto
+        var periodoSeleccionado = 'mensual'; // Periodo por defecto
+        var yearSeleccionado = new Date().getFullYear(); // Año por defecto
+        var fechaInicioSeleccionada = null;
+        var fechaFinSeleccionada = null;
+        var nombreEmpleadoSeleccionado = ''; // Variable global para almacenar el nombre del empleado
+
+        function cargarGraficoVentas(year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado) {
+            console.log("cargarGraficoVentas called with:", { year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado });
+            $.get('/Reportes/ObtenerVentasPorPeriodo', { year: year, fechaInicio: fechaInicio, fechaFin: fechaFin, tipoVenta: tipoVenta, periodo: periodo, nombreEmpleado: nombreEmpleado }, function (data) {
+                console.log(data); // Agregar esta línea para depuración
+
+                if (data.Message) {
+                    console.log(data.Message);
+                    alert(data.Message);
+                    return;
+                }
+
+                if (!Array.isArray(data.ventas)) {
+                    console.error("Expected an array but got:", data.ventas);
+                    alert("Error: Expected an array but got an invalid response.");
+                    return;
+                }
+
+                var periodos = data.ventas.map(function (item) { return item.periodo; });
+                var totales = data.ventas.map(function (item) { return item.totalVendido; });
+                var cantidades = data.ventas.map(function (item) { return item.cantidadVentas; });
+
+                var ctx = document.getElementById('graficoVentas').getContext('2d');
+                var barCtx = document.getElementById('graficoCantidadVentas').getContext('2d');
+
+                // Destruir la instancia existente del gráfico si existe
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: periodos,
+                        datasets: [{
+                            label: "Ventas ($)",
+                            data: totales,
+                            borderColor: "blue",
+                            backgroundColor: "rgba(0, 0, 255, 0.2)",
+                            borderWidth: 2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Destruir la instancia existente del gráfico de barras si existe
+                if (barChartInstance) {
+                    barChartInstance.destroy();
+                }
+
+                barChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: periodos,
+                        datasets: [{
+                            label: "Cantidad de Ventas",
+                            data: cantidades,
+                            backgroundColor: "rgba(255, 99, 132, 0.2)",
+                            borderColor: "rgba(255, 99, 132, 1)",
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Actualizar cantidad de ventas y total vendido
+                $('div.border p span').eq(0).text(data.cantidadVentas);
+                $('div.border p span').eq(1).text(data.totalVendido.toFixed(2));
+            });
+        }
+
+        // Cargar gráfico con el año actual y ventas locales al cargar la página
+        cargarGraficoVentas(yearSeleccionado, null, null, tipoVentaSeleccionado, periodoSeleccionado, null);
+
+        // Manejar el evento de cambio de año
+        $('#inputYear').on('change', function () {
+            yearSeleccionado = $(this).val();
+            $('#fechaInicio').val('');
+            $('#fechaFin').val('');
+            fechaInicioSeleccionada = null;
+            fechaFinSeleccionada = null;
+            $('#nombreEmpleado').val(''); // Limpiar el campo del nombre del empleado
+            nombreEmpleadoSeleccionado = ''; // Limpiar la variable global
+            if (!yearSeleccionado) {
+                yearSeleccionado = new Date().getFullYear(); // Si el input de año está vacío, usar el año actual
+            }
+            cargarGraficoVentas(yearSeleccionado, null, null, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        // Manejar el evento de los botones de tipo de venta
+        $('#btnVentasLocales').on('click', function () {
+            $('#tituloVentas').text('Ventas locales');
+            tipoVentaSeleccionado = 'LOCAL';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        $('#btnVentasLinea').on('click', function () {
+            $('#tituloVentas').text('Ventas en línea');
+            tipoVentaSeleccionado = 'ONLINE';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        $('#btnVentasTotales').on('click', function () {
+            $('#tituloVentas').text('Ventas totales');
+            tipoVentaSeleccionado = 'total';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        // Manejar el evento de los botones de periodo
+        $('#btnMensual').on('click', function () {
+            $('#tituloPeriodo').text('Reportes mensuales');
+            periodoSeleccionado = 'mensual';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        $('#btnSemanal').on('click', function () {
+            $('#tituloPeriodo').text('Reportes semanales');
+            periodoSeleccionado = 'semanal';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        $('#btnHoy').on('click', function () {
+            $('#tituloPeriodo').text('Reportes diarios');
+            periodoSeleccionado = 'diario';
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        });
+
+        // Manejar el evento de cambio de rango de fechas
+        $('#fechaInicio, #fechaFin').on('change', function () {
+            fechaInicioSeleccionada = $('#fechaInicio').val();
+            fechaFinSeleccionada = $('#fechaFin').val();
+            if (fechaInicioSeleccionada && fechaFinSeleccionada) {
+                $('#inputYear').val('');
+                yearSeleccionado = null;
+                cargarGraficoVentas(null, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+            }
+        });
+
+        // Manejar el evento de presionar Enter en el campo de nombre del empleado
+        $('#nombreEmpleado').on('keypress', function (e) {
+            if (e.which == 13) { // Enter key pressed
+                console.log("Enter key pressed in nombreEmpleado input");
+                nombreEmpleadoSeleccionado = $(this).val(); // Actualizar la variable global
+                $('#inputYear').val(''); // Limpiar el campo del año
+                yearSeleccionado = null; // Limpiar la variable global del año
+                cargarGraficoVentas(null, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+            }
+        });
+
+        // Manejar el evento de clic en el botón Descargar PDF
+        $('#btnDescargarPdf').on('click', function () {
+            var year = $('#inputYear').val();
+            var fechaInicio = $('#fechaInicio').val();
+            var fechaFin = $('#fechaFin').val();
+            var tipoVenta = tipoVentaSeleccionado;
+            var periodo = periodoSeleccionado;
+            var nombreEmpleado = nombreEmpleadoSeleccionado;
+
+            var url = `/Reportes/DescargarPdf?year=${year}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&tipoVenta=${tipoVenta}&periodo=${periodo}&nombreEmpleado=${nombreEmpleado}`;
+            window.location.href = url;
+        });
+    });
+</script>

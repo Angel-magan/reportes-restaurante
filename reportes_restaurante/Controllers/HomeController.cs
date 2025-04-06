@@ -23,6 +23,16 @@ namespace reportes_restaurante.Controllers
             return View();
         }
 
+        public ActionResult DetalleMesas()
+        {
+            return PartialView("~/Views/DetalleMesasPedidos/_DetalleMesas.cshtml"); 
+        }
+
+        public ActionResult DetallePedidos()
+        {
+            return PartialView("~/Views/DetalleMesasPedidos/_DetallePedidos.cshtml");
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
