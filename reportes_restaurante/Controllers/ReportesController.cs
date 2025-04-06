@@ -29,8 +29,6 @@ namespace reportes_restaurante.Controllers
         [HttpGet]
         public IActionResult ObtenerVentasPorPeriodo(int? year, DateTime? fechaInicio, DateTime? fechaFin, string tipoVenta, string periodo, string nombreEmpleado)
         {
-            Console.WriteLine($"Nombre del empleado: {nombreEmpleado}");
-
             IQueryable<Factura> query = _context.Factura.AsQueryable();
 
             if (fechaInicio.HasValue && fechaFin.HasValue)
@@ -61,48 +59,52 @@ namespace reportes_restaurante.Controllers
             var ventas = new List<object>();
             if (periodo == "mensual")
             {
-                var ventasMensuales = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Mes = f.fecha.Month })
-                    .Select(g => new
+                var ventasMensuales = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Mes = f.fecha.Month } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-" + new DateTime(g.Key.Año, g.Key.Mes, 1).ToString("MMM"),
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
+
                 ventas.AddRange(ventasMensuales);
             }
             else if (periodo == "semanal")
             {
-                var ventasSemanales = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Semana = restauranteContext.GetIsoWeek(f.fecha) })
-                    .Select(g => new
+                var ventasSemanales = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Semana = restauranteContext.GetIsoWeek(f.fecha) } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-Semana " + g.Key.Semana,
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
+
                 ventas.AddRange(ventasSemanales);
             }
             else if (periodo == "diario")
             {
-                var ventasDiarias = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Mes = f.fecha.Month, Dia = f.fecha.Day })
-                    .Select(g => new
+                var ventasDiarias = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Mes = f.fecha.Month, Dia = f.fecha.Day } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-" + g.Key.Mes.ToString("D2") + "-" + g.Key.Dia.ToString("D2"),
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
+
                 ventas.AddRange(ventasDiarias);
             }
 
             var cantidadVentas = query.Count();
             var totalVendido = query.Sum(v => v.total);
-
-            Console.WriteLine($"Cantidad de ventas: {cantidadVentas}, Total vendido: {totalVendido}");
 
             return Json(new { ventas, cantidadVentas, totalVendido });
         }
@@ -113,22 +115,25 @@ namespace reportes_restaurante.Controllers
             // Obtener los datos filtrados según los parámetros
             var datosFiltrados = ObtenerDatosFiltrados(year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado);
 
+            // Determinar la vista a usar
+            string viewName = string.IsNullOrEmpty(nombreEmpleado) ? "ReporteVentasPdf" : "ReporteVentasEmpleadoPdf";
+
             // Generar el contenido HTML para el PDF
-            var htmlContent = GenerarHtmlParaPdf(datosFiltrados);
+            var htmlContent = RenderViewToString(viewName, datosFiltrados);
 
             // Configurar el documento PDF
             var pdf = new HtmlToPdfDocument()
             {
                 GlobalSettings = {
-                    PaperSize = PaperKind.A4,
-                    Orientation = Orientation.Portrait,
-                },
+            PaperSize = PaperKind.A4,
+            Orientation = Orientation.Portrait,
+        },
                 Objects = {
-                    new ObjectSettings() {
-                        HtmlContent = htmlContent,
-                        WebSettings = { DefaultEncoding = "utf-8" }
-                    }
-                }
+            new ObjectSettings() {
+                HtmlContent = htmlContent,
+                WebSettings = { DefaultEncoding = "utf-8" }
+            }
+        }
             };
 
             try
@@ -141,8 +146,6 @@ namespace reportes_restaurante.Controllers
                 return Content("Error: " + ex.Message);
             }
         }
-
-        //Ahorita se agrego para vista de pdf***********
         private string GenerarHtmlParaPdf(dynamic datosFiltrados)
         {
             var htmlContent = RenderViewToString("ReporteVentasPdf", datosFiltrados);
@@ -150,13 +153,14 @@ namespace reportes_restaurante.Controllers
         }
         private string RenderViewToString(string viewName, object model)
         {
-            var viewEngine = HttpContext.RequestServices.GetService(typeof(IRazorViewEngine)) as IRazorViewEngine;
-            var tempDataProvider = HttpContext.RequestServices.GetService(typeof(ITempDataProvider)) as ITempDataProvider;
-            var actionContext = new ActionContext(HttpContext, RouteData, ControllerContext.ActionDescriptor);
+            //Renderizar manualmente esto para el pdf pa
+            var motorVista = HttpContext.RequestServices.GetService(typeof(IRazorViewEngine)) as IRazorViewEngine;
+            var proveedordatosTem = HttpContext.RequestServices.GetService(typeof(ITempDataProvider)) as ITempDataProvider;
+            var contextAccion = new ActionContext(HttpContext, RouteData, ControllerContext.ActionDescriptor);
 
             using (var sw = new StringWriter())
             {
-                var viewResult = viewEngine.FindView(actionContext, viewName, false);
+                var viewResult = motorVista.FindView(contextAccion, viewName, false);
 
                 if (viewResult.View == null)
                 {
@@ -169,10 +173,10 @@ namespace reportes_restaurante.Controllers
                 };
 
                 var viewContext = new ViewContext(
-                    actionContext,
+                    contextAccion,
                     viewResult.View,
                     viewDictionary,
-                    new TempDataDictionary(actionContext.HttpContext, tempDataProvider),
+                    new TempDataDictionary(contextAccion.HttpContext, proveedordatosTem),
                     sw,
                     new HtmlHelperOptions()
                 );
@@ -189,9 +193,9 @@ namespace reportes_restaurante.Controllers
             {
                 query = query.Where(v => v.fecha >= fechaInicio.Value && v.fecha <= fechaFin.Value);
             }
-            else
+            else if (year.HasValue)
             {
-                int selectedYear = year ?? DateTime.Now.Year;
+                int selectedYear = year.Value;
                 query = query.Where(v => v.fecha.Year == selectedYear);
             }
 
@@ -213,48 +217,51 @@ namespace reportes_restaurante.Controllers
             var ventas = new List<object>();
             if (periodo == "mensual")
             {
-                var ventasMensuales = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Mes = f.fecha.Month })
-                    .Select(g => new
+                var ventasMensuales = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Mes = f.fecha.Month } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-" + new DateTime(g.Key.Año, g.Key.Mes, 1).ToString("MMM"),
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
                 ventas.AddRange(ventasMensuales);
             }
             else if (periodo == "semanal")
             {
-                var ventasSemanales = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Semana = restauranteContext.GetIsoWeek(f.fecha) })
-                    .Select(g => new
+                var ventasSemanales = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Semana = restauranteContext.GetIsoWeek(f.fecha) } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-Semana " + g.Key.Semana,
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
                 ventas.AddRange(ventasSemanales);
             }
             else if (periodo == "diario")
             {
-                var ventasDiarias = query
-                    .GroupBy(f => new { Año = f.fecha.Year, Mes = f.fecha.Month, Dia = f.fecha.Day })
-                    .Select(g => new
+                var ventasDiarias = (
+                    from f in query
+                    group f by new { Año = f.fecha.Year, Mes = f.fecha.Month, Dia = f.fecha.Day } into g
+                    select new
                     {
                         Periodo = g.Key.Año.ToString() + "-" + g.Key.Mes.ToString("D2") + "-" + g.Key.Dia.ToString("D2"),
                         TotalVendido = g.Sum(v => v.total),
                         CantidadVentas = g.Count()
-                    })
-                    .ToList();
+                    }
+                ).ToList();
                 ventas.AddRange(ventasDiarias);
             }
 
             var cantidadVentas = query.Count();
             var totalVendido = query.Sum(v => v.total);
 
-            return new { ventas, cantidadVentas, totalVendido, tipoVenta };
+            return new { ventas, cantidadVentas, totalVendido, tipoVenta, nombreEmpleado };
         }
     }
 }

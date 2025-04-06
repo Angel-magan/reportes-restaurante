@@ -4,7 +4,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Restaurante Dulce Sabor</title>
+    <title>Restaurante Dulce Sabor - Reporte de Ventas por Empleado</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,23 +76,24 @@
         </table>
         <p><strong>Restaurante:</strong> Dulce Sabor</p>
         <p><strong>Fecha de Generación:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
-        <hr style="margin-bottom: 20px;"/>
+        <p><strong>Nombre del empleado:</strong> @Model.nombreEmpleado</p>
+        <hr style="margin-bottom: 20px;" />
         <table>
             <tr>
                 <th>Periodo</th>
+                <th>Cuentas cerradas</th>
                 <th>Total Vendido</th>
-                <th>Cantidad de Ventas</th>
             </tr>
             @foreach (var venta in Model.ventas)
             {
                 <tr>
                     <td>@venta.Periodo</td>
-                    <td>$@venta.TotalVendido</td>
                     <td>@venta.CantidadVentas</td>
+                    <td>$@venta.TotalVendido</td>
                 </tr>
             }
         </table>
-        <hr style="margin-bottom: 20px; margin-top: 20px"/>
+        <hr style="margin-bottom: 20px; margin-top: 20px" />
         <p><strong>Total de Ventas:</strong> @Model.cantidadVentas</p>
         <p><strong>Total Vendido:</strong> $@Model.totalVendido</p>
         <hr />
