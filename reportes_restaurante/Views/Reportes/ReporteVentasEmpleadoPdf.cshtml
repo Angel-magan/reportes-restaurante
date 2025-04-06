@@ -1,0 +1,103 @@
+﻿@model dynamic
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Restaurante Dulce Sabor - Reporte de Ventas por Empleado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .contenedor {
+            padding: 30px;
+        }
+
+        .header {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+            .header td {
+                padding: 8px;
+                border: none;
+                background-color: transparent;
+            }
+
+            .header .left {
+                text-align: left;
+                width: 70%;
+            }
+
+            .header .right {
+                text-align: right;
+                width: 30%;
+            }
+
+            .header .txtLogo {
+                font-size: 20px;
+                font-weight: bold;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .txtFooter {
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <table class="header">
+            <tr>
+                <td class="left">
+                    <img src="file:///C:/Users/magan/OneDrive/Pictures/imgRestaurante/Logo.png" alt="Logo" width="100" />
+                </td>
+                <td class="right">
+                    <strong>Tipo de venta:</strong> @Model.tipoVenta
+                </td>
+            </tr>
+        </table>
+        <p><strong>Restaurante:</strong> Dulce Sabor</p>
+        <p><strong>Fecha de Generación:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
+        <p><strong>Nombre del empleado:</strong> @Model.nombreEmpleado</p>
+        <hr style="margin-bottom: 20px;" />
+        <table>
+            <tr>
+                <th>Periodo</th>
+                <th>Cuentas cerradas</th>
+                <th>Total Vendido</th>
+            </tr>
+            @foreach (var venta in Model.ventas)
+            {
+                <tr>
+                    <td>@venta.Periodo</td>
+                    <td>@venta.CantidadVentas</td>
+                    <td>$@venta.TotalVendido</td>
+                </tr>
+            }
+        </table>
+        <hr style="margin-bottom: 20px; margin-top: 20px" />
+        <p><strong>Total de Ventas:</strong> @Model.cantidadVentas</p>
+        <p><strong>Total Vendido:</strong> $@Model.totalVendido</p>
+        <hr />
+        <p class="txtFooter">Este reporte a sido generado automáticamente por el sistema de Restaurante Dulce Sabor</p>
+    </div>
+</body>
+</html>
