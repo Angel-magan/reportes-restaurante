@@ -100,7 +100,13 @@
         $(document).on('click', '.LblIdPedido', function () {
 
             var Id = $(this).attr('id');
-            console.log("ID del pedido:", Id);
+            var tipoVenta = 'Local';
+            const checkbox = document.getElementById('flexSwitchCheckDefault');
+
+            if(checkbox.checked){
+                tipoVenta = 'En Linea';
+            }
+            console.log(tipoVenta);
 
             if (Id != 0) {
                 var Total = 0;
@@ -110,20 +116,22 @@
                     $("#NombreMesero").text(data[0].mesero || 'Información no disponible');
                 });
 
-                 var platosRequest = $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoPlatos', { id_pedido: Id });
-                 var combosRequest = $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoCombos', { id_pedido: Id });
+                 var platosRequest = $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoPlatos', { id_pedido: Id, tipoVenta: tipoVenta});
+                 var combosRequest = $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoCombos', { id_pedido: Id, tipoVenta: tipoVenta});
 
                 $.when(platosRequest, combosRequest).done(function (platosData, combosData) {
 
                     $("#DetPedidoPlatos").empty();
                     $.each(platosData[0], function (i, item) {
-                        $("#DetPedidoPlatos").append('<p>Estado: ' + item.estado + ' - Plato: ' + item.plato + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
+                        $("#DetPedidoPlatos").append('<p>Tipo Venta: ' + item.tipoVenta + ' - Estado: ' + item.estado);
+                        $("#DetPedidoPlatos").append('<p>Plato: ' + item.plato + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
                         Total += item.subtotal;
                     });
 
                     $("#DetPedidoCombos").empty();
                     $.each(combosData[0], function (i, item) {
-                        $("#DetPedidoCombos").append('<p>Estado: ' + item.estado + ' - Combo: ' + item.combo + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
+                        $("#DetPedidoCombos").append('<p>Tipo Venta: ' + item.tipoVenta + ' - Estado: ' + item.estado);
+                        $("#DetPedidoCombos").append('<p>Combo: ' + item.combo + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
                         Total += item.subtotal;
                     });
 
