@@ -12,9 +12,12 @@
         <div>
             <a href="/" class="btn text-black mb-2" style="background-color: #ffd734">DASHBOARD</a>
             <a href="@Url.Action("DashboardReportes", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">PEDIDOS</a>
+            <a href="@Url.Action("ReportesPdf", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">GENERAR MAS REPORTES</a>
         </div>
         <div class="d-flex flex-md-row flex-column align-items-md-center justify-content-between">
             <div class="d-flex flex-column flex-md-row me-md-3 w-100 w-md-auto">
+                
+
                 <div class="me-md-3 mb-2 mb-md-0">
                     <label for="fechaInicio">Fecha inicio:</label>
                     <input type="date" id="fechaInicio" name="fechaInicio" class="form-control">
@@ -73,6 +76,10 @@
         <hr style="height: 2px" />
     </section>
     <button id="btnDescargarPdf" class="btn text-light mb-2 d-block mx-auto" style="background-color: #af1717">Descargar PDF</button>
+   
+
+
+
 </div>
 
 <script>
@@ -263,3 +270,6 @@
         });
     });
 </script>
+<script src="~/js/ventasPorDia.js"></script>
+<script src="~/js/ventasPorMes.js"></script>
+<script src="~/js/ventasPorRango.js"></script>
