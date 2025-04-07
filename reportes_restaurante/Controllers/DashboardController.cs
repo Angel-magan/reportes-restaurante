@@ -80,7 +80,7 @@ namespace reportes_restaurante.Controllers
             ViewBag.CuentasCerradas = cuentasCerradas;
 
 
-            // Llamar al método CalcularIngresos para obtener los valores
+           // Llamar al método CalcularIngresos para obtener los valores
             var ingresos = CalcularIngresos();
 
             // Pasar los resultados de ingresos a la vista usando ViewBag
@@ -90,7 +90,7 @@ namespace reportes_restaurante.Controllers
 
 
 
-
+            
 
 
             return View();
@@ -98,7 +98,7 @@ namespace reportes_restaurante.Controllers
 
         }
 
-
+        
         private (decimal ingresosLocales, decimal ingresosEnLinea, decimal ingresosTotales) CalcularIngresos()
         {
             var today = DateTime.Today;  // Obtener la fecha de hoy
@@ -119,6 +119,77 @@ namespace reportes_restaurante.Controllers
                 .Sum(f => f.total);
 
             return (ingresosLocales, ingresosEnLinea, ingresosTotales);
+        }
+        
+
+        [HttpGet]
+        public IActionResult ObtenerIngresosPorMes(int year, int month)
+        {
+            var ingresosLocales = _context.Factura
+                .Where(f => f.tipo_venta == "LOCAL" && f.fecha.Year == year && f.fecha.Month == month)
+                .Sum(f => f.total);
+
+            var ingresosEnLinea = _context.Factura
+                .Where(f => f.tipo_venta == "ONLINE" && f.fecha.Year == year && f.fecha.Month == month)
+                .Sum(f => f.total);
+
+            var ingresosTotales = ingresosLocales + ingresosEnLinea;
+
+            return Json(new { ingresosLocales, ingresosEnLinea, ingresosTotales });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerIngresosPorSemana()
+        {
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+
+            var ingresosLocales = _context.Factura
+                .Where(f => f.tipo_venta == "LOCAL" && f.fecha.Date >= startOfWeek && f.fecha.Date <= today)
+                .Sum(f => f.total);
+
+            var ingresosEnLinea = _context.Factura
+                .Where(f => f.tipo_venta == "ONLINE" && f.fecha.Date >= startOfWeek && f.fecha.Date <= today)
+                .Sum(f => f.total);
+
+            var ingresosTotales = ingresosLocales + ingresosEnLinea;
+
+            return Json(new { ingresosLocales, ingresosEnLinea, ingresosTotales });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerIngresosPorDia()
+        {
+            var today = DateTime.Today;
+
+            var ingresosLocales = _context.Factura
+                .Where(f => f.tipo_venta == "LOCAL" && f.fecha.Date == today)
+                .Sum(f => f.total);
+
+            var ingresosEnLinea = _context.Factura
+                .Where(f => f.tipo_venta == "ONLINE" && f.fecha.Date == today)
+                .Sum(f => f.total);
+
+            var ingresosTotales = ingresosLocales + ingresosEnLinea;
+
+            return Json(new { ingresosLocales, ingresosEnLinea, ingresosTotales });
+        }
+
+
+        [HttpGet]
+        public IActionResult ObtenerIngresosPorRango(DateTime startDate, DateTime endDate)
+        {
+            var ingresosLocales = _context.Factura
+                .Where(f => f.tipo_venta == "LOCAL" && f.fecha.Date >= startDate && f.fecha.Date <= endDate)
+                .Sum(f => f.total);
+
+            var ingresosEnLinea = _context.Factura
+                .Where(f => f.tipo_venta == "ONLINE" && f.fecha.Date >= startDate && f.fecha.Date <= endDate)
+                .Sum(f => f.total);
+
+            var ingresosTotales = ingresosLocales + ingresosEnLinea;
+
+            return Json(new { ingresosLocales, ingresosEnLinea, ingresosTotales });
         }
 
 
@@ -147,6 +218,65 @@ namespace reportes_restaurante.Controllers
 
             return Json(new { ventas });
         }
+
+
+        [HttpGet]
+        public IActionResult ObtenerVentasPorSemana()
+        {
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Inicio de la semana (domingo)
+            var ventas = _context.Factura
+                .Where(f => f.fecha.Date >= startOfWeek && f.fecha.Date <= today)
+                .GroupBy(f => f.fecha.Date)
+                .Select(g => new
+                {
+                    Fecha = g.Key,
+                    TotalVendido = g.Sum(f => f.total)
+                })
+                .OrderBy(v => v.Fecha)
+                .ToList();
+
+            return Json(new { ventas });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerVentasPorHora()
+        {
+            var today = DateTime.Today;
+            var ventas = _context.Factura
+                .Where(f => f.fecha.Date == today)
+                .GroupBy(f => f.fecha.Hour)
+                .Select(g => new
+                {
+                    Hora = g.Key,
+                    TotalVendido = g.Sum(f => f.total)
+                })
+                .OrderBy(v => v.Hora)
+                .ToList();
+
+            return Json(new { ventas });
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerVentasPorRango(DateTime startDate, DateTime endDate)
+        {
+            var ventas = _context.Factura
+                .Where(f => f.fecha.Date >= startDate && f.fecha.Date <= endDate)
+                .GroupBy(f => f.fecha.Date)
+                .Select(g => new
+                {
+                    Fecha = g.Key,
+                    TotalVendido = g.Sum(f => f.total)
+                })
+                .OrderBy(v => v.Fecha)
+                .ToList();
+
+            return Json(new { ventas });
+        }
+
+
+
+
 
         [HttpGet]
         public IActionResult ObtenerTopPlatos()
@@ -180,7 +310,7 @@ namespace reportes_restaurante.Controllers
         [HttpGet]
         public IActionResult ObtenerTopCombos()
         {
-            // Primero obtenemos todos los detalles de los pedidos con tipo "Combo"
+        
             var topCombos = _context.Detalle_Pedido
                 .Where(dp => dp.tipo_Item == "Combo")
                 .Join(_context.combos, dp => dp.item_id, combo => combo.id,
@@ -190,7 +320,7 @@ namespace reportes_restaurante.Controllers
                         Nombre = combo.nombre,
                         CantidadVendida = dp.cantidad
                     })
-                .AsEnumerable()  // Convertimos a memoria para hacer la agrupación y la suma en el cliente
+                .AsEnumerable()  
                 .GroupBy(x => new { x.ComboId, x.Nombre })
                 .Select(g => new
                 {
@@ -198,8 +328,8 @@ namespace reportes_restaurante.Controllers
                     Nombre = g.Key.Nombre,
                     TotalVendidos = g.Sum(x => x.CantidadVendida)
                 })
-                .OrderByDescending(x => x.TotalVendidos)  // Ordenamos por el total vendido de forma descendente
-                .Take(5)  // Tomamos los 5 primeros
+                .OrderByDescending(x => x.TotalVendidos) 
+                .Take(5)  
                 .ToList();
 
             return Json(topCombos);

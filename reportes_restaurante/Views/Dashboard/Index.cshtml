@@ -22,10 +22,10 @@
 
         <!-- Botones para rangos -->
         <div class="d-flex gap-2">
-            <button class="btn text-black" style="background-color: #ffd734">MENSUAL</button>
-            <button class="btn text-black" style="background-color: #ffd734">SEMANAL</button>
-            <button class="btn text-black" style="background-color: #ffd734">HOY</button>
-            <button class="btn text-white" style="background-color: #800000">MOSTRAR</button>
+            <button class= "btn text-black" id="mensualBtn" style="background-color: #ffd734">MENSUAL</button>
+            <button class="btn text-black" id="semanalBtn" style="background-color: #ffd734">SEMANAL</button>
+            <button class="btn text-black" id="hoyBtn" style="background-color: #ffd734">HOY</button>
+            <button class="btn text-white"id="mostrarBtn" style="background-color: #800000">MOSTRAR</button>
         </div>
 
         <!-- Selector de rango de fechas -->
@@ -78,20 +78,21 @@
 
     <div class="d-flex justify-content-between align-items-center mt-4">
         <!-- Ingresos Totales Locales -->
-        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+        <button id="ingresosLocales" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
             INGRESOS TOTALES LOCALES<br>@ViewBag.IngresosLocales.ToString("C")
         </button>
 
         <!-- Ingresos Totales en Línea -->
-        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+        <button id="ingresosEnLinea" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
             INGRESOS TOTALES EN LÍNEA<br>@ViewBag.IngresosEnLinea.ToString("C")
         </button>
 
         <!-- Ingresos Totales Ambos -->
-        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
-            INGRESOS TOTALES AMBOS<br>@ViewBag.IngresosTotales.ToString("C")
+        <button id="ingresosTotales" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES AMBOS<br>@ViewBag.IngresosTotales.ToString("C") 
         </button>
     </div>
+
 
 
 
@@ -131,79 +132,163 @@
     </div>
 
 
+
+
+
+
+
+
 <script>
         $(document).ready(function () {
+            function actualizarIngresos(data) {
+                // Actualizar los botones con los ingresos obtenidos
+                $("#ingresosLocales").html(`INGRESOS TOTALES LOCALES<br>${data.ingresosLocales}`);
+                $("#ingresosEnLinea").html(`INGRESOS TOTALES EN LÍNEA<br>${data.ingresosEnLinea}`);
+                $("#ingresosTotales").html(`INGRESOS TOTALES AMBOS<br>${data.ingresosTotales}`);
+            }
+
+            // Lógica para cargar los ingresos del mes por defecto
+            var today = new Date();
+            var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+            var currentYear = today.getFullYear(); // Año actual
+
+            $.get('/Dashboard/ObtenerIngresosPorMes', { year: currentYear, month: currentMonth }, function (data) {
+                actualizarIngresos(data);
+            });
+
+            // Evento para "Mensual"
+            $("#mensualBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorMes', { year: currentYear, month: currentMonth }, function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Semanal"
+            $("#semanalBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorSemana', function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Hoy"
+            $("#hoyBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorDia', function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Mostrar"
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+
+                $.get('/Dashboard/ObtenerIngresosPorRango', { startDate, endDate }, function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+        });
+
+</script>
+
+
+<script>
+        $(document).ready(function () {
+
+                    // Lógica para cargar las ventas por día automáticamente
+        var today = new Date();
+        var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+        var currentYear = today.getFullYear(); // Año actual
+
+        // Llamada automática al cargar la página
+        $.get('/Dashboard/ObtenerVentasPorDia', { year: currentYear, month: currentMonth }, function (data) {
+            const labels = data.ventas.map(v => v.fecha); // Días del mes
+            const valores = data.ventas.map(v => v.totalVendido); // Ventas totales por día
+
+            actualizarGrafica(labels, valores, "Ventas Mensuales");
+        });
+
+
+            function actualizarGrafica(labels, data, label) {
+                var ctx = document.getElementById('ventasChart').getContext('2d');
+
+                // Destruir la instancia del gráfico existente si ya está creado
+                if (window.chartInstance) {
+                    window.chartInstance.destroy();
+                }
+
+                // Crear el gráfico
+                window.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels, // Etiquetas (días u horas)
+                        datasets: [{
+                            label: label, // Etiqueta del gráfico
+                            data: data, // Ventas
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Evento para "Mensual"
+        $("#mensualBtn").click(function () {
             // Obtener el mes y el año actual
             var today = new Date();
             var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
             var currentYear = today.getFullYear(); // Año actual
 
-            // Obtener el número de días del mes actual
-            var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-            // Crear las fechas del mes actual (del 1 al N días del mes)
-            var days = [];
-            for (var i = 1; i <= daysInMonth; i++) {
-                days.push(i); // Días del mes (1 a N)
-            }
-
-            // Llamada AJAX para obtener las ventas por día
+            // Llamada AJAX al método corregido del controlador
             $.get('/Dashboard/ObtenerVentasPorDia', { year: currentYear, month: currentMonth }, function (data) {
-                console.log(data); // Verificar que los datos sean correctos
+                const labels = data.ventas.map(v => v.fecha); // Días del mes
+                const valores = data.ventas.map(v => v.totalVendido); // Ventas totales por día
 
-                // Verificar si los datos están bien formados
-                if (!Array.isArray(data.ventas)) {
-                    console.error("Se esperaba un array pero se recibió:", data.ventas);
-                    alert("Error: Los datos no están bien formados.");
-                    return;
-                }
+                actualizarGrafica(labels, valores, "Ventas Mensuales");
+            });
+        });
 
-                // Asegurar que todos los días tengan un valor (inicializado con 0)
-                var totalVentasPorDia = Array(daysInMonth).fill(0);
 
-                // Asignamos las ventas a los días correspondientes
-                data.ventas.forEach(function (venta) {
-                    var day = venta.fecha; // Día del mes (ahora se usa 'fecha' en lugar de 'Fecha')
-                    var totalVendido = venta.totalVendido;
+            // Evento para "Semanal"
+            $("#semanalBtn").click(function () {
+                $.get('/Dashboard/ObtenerVentasPorSemana', function (data) {
+                    const labels = data.ventas.map(v => v.fecha);
+                    const valores = data.ventas.map(v => v.totalVendido);
 
-                    // Actualizamos el total vendido para el día correspondiente
-                    totalVentasPorDia[day - 1] = totalVendido; // El array tiene índices basados en 0, así que restamos 1
+                    actualizarGrafica(labels, valores, "Ventas Semanales");
                 });
+            });
 
-                console.log("Ventas por día: ", totalVentasPorDia); // Verificar el array totalVentasPorDia
+            // Evento para "Hoy"
+            $("#hoyBtn").click(function () {
+                $.get('/Dashboard/ObtenerVentasPorHora', function (data) {
+                    const labels = data.ventas.map(v => v.hora);
+                    const valores = data.ventas.map(v => v.totalVendido);
 
-                // Crear la gráfica con Chart.js
-                var ctx = document.getElementById('ventasChart').getContext('2d');
-                if (ctx) {
-                    // Destruir la instancia del gráfico existente si ya está creado
-                    if (window.chartInstance) {
-                        window.chartInstance.destroy();
-                    }
+                    actualizarGrafica(labels, valores, "Ventas por Hora (Hoy)");
+                });
+            });
 
-                    // Crear el gráfico de líneas
-                    window.chartInstance = new Chart(ctx, {
-                        type: 'line', // Tipo de gráfico (línea)
-                        data: {
-                            labels: days, // Días del mes (de 1 a N)
-                            datasets: [{
-                                label: 'Ventas Diarias',
-                                data: totalVentasPorDia, // Total de ventas por día
-                                borderColor: 'rgba(75, 192, 192, 1)', // Color de la línea
-                                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Color de fondo de la línea
-                                borderWidth: 2,
-                                fill: true
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true
-                                }
-                            }
-                        }
-                    });
-                }
+            // Evento para "Mostrar"
+            $("#mostrarBtn").click(function () {
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+
+                $.get('/Dashboard/ObtenerVentasPorRango', { startDate, endDate }, function (data) {
+                    const labels = data.ventas.map(v => v.fecha);
+                    const valores = data.ventas.map(v => v.totalVendido);
+
+                    actualizarGrafica(labels, valores, `Ventas del ${startDate} al ${endDate}`);
+                });
             });
         });
 
