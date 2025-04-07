@@ -53,12 +53,18 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #003653;
+            color: white;
         }
 
         .txtFooter {
             text-align: center;
         }
+
+            .txtFooter .titleRes {
+                color: #003653;
+                font-weight: bold;
+            }
 
     </style>
 </head>
@@ -74,7 +80,6 @@
                 </td>
             </tr>
         </table>
-        <p><strong>Restaurante:</strong> Dulce Sabor</p>
         <p><strong>Fecha de Generación:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
         <hr style="margin-bottom: 20px;"/>
         <table>
@@ -96,7 +101,7 @@
         <p><strong>Total de Ventas:</strong> @Model.cantidadVentas</p>
         <p><strong>Total Vendido:</strong> $@Model.totalVendido</p>
         <hr />
-        <p class="txtFooter">Este reporte a sido generado automáticamente por el sistema de Restaurante Dulce Sabor</p>
+        <p class="txtFooter">Este reporte a sido generado automáticamente por el sistema de Restaurante <span class="titleRes">Foodie</span></p>
     </div>
 </body>
 </html>
