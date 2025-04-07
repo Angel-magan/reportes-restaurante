@@ -67,11 +67,7 @@
                 <p>@ViewBag.PedidosFinalizados</p>
                 <p class="fw-bold">PEDIDOS FINALIZADOS</p>
             </section>
-            <section class="text-center border border-1 rounded-3 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p>@ViewBag.CuentasCerradas</p>
-                <p class="fw-bold">CUENTAS CERRADAS</p>
-            </section>
+
         </div>
     </div>
 
@@ -142,9 +138,13 @@
         $(document).ready(function () {
             function actualizarIngresos(data) {
                 // Actualizar los botones con los ingresos obtenidos
-                $("#ingresosLocales").html(`INGRESOS TOTALES LOCALES<br>${data.ingresosLocales}`);
-                $("#ingresosEnLinea").html(`INGRESOS TOTALES EN LÍNEA<br>${data.ingresosEnLinea}`);
-                $("#ingresosTotales").html(`INGRESOS TOTALES AMBOS<br>${data.ingresosTotales}`);
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        });
+                $("#ingresosLocales").html(`INGRESOS TOTALES LOCALES<br>${formatter.format(data.ingresosLocales)}`);
+                $("#ingresosEnLinea").html(`INGRESOS TOTALES EN LÍNEA<br>${formatter.format(data.ingresosEnLinea)}`);
+                $("#ingresosTotales").html(`INGRESOS TOTALES AMBOS<br>${formatter.format(data.ingresosTotales)}`);
             }
 
             // Lógica para cargar los ingresos del mes por defecto
@@ -296,110 +296,135 @@
 
 
     <script>
-        $(document).ready(function () {
-            // Llamar a la función para cargar los datos al cargar la página
-            cargarGraficoPlatos();
+              $(document).ready(function () {
+            function cargarGraficoPlatos(url) {
+                $.get(url, function (data) {
+                    var labels = data.map(item => item.nombre);
+                    var values = data.map(item => item.totalVendidos);
 
-            function cargarGraficoPlatos() {
-                $.get('/Dashboard/ObtenerTopPlatos', function (data) {
-                    console.log(data);  // Verificar los datos que se reciben
-
-                    // Verificamos que los datos sean correctos
-                    if (data.length === 0) {
-                        console.log("No hay datos para mostrar en el gráfico.");
-                        return;
-                    }
-
-                    // Extraer los datos que necesitamos para la gráfica
-                    var labels = data.map(function (item) { return item.nombre; });  // Usamos 'nombre' en vez de 'Nombre'
-                    var dataPlatos = data.map(function (item) { return item.totalVendidos; });  // Usamos 'totalVendidos' en vez de 'TotalVendidos'
-
-                    // Crear el gráfico de pastel
                     var ctx = document.getElementById('platosChart').getContext('2d');
-                    var pieChart = new Chart(ctx, {
+                    if (window.chartPlatos) {
+                        window.chartPlatos.destroy();
+                    }
+                    window.chartPlatos = new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: labels,  // Los nombres de los platos
+                            labels: labels,
                             datasets: [{
-                                data: dataPlatos,  // Los totales vendidos de cada plato
-                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],  // Colores para cada sección
+                                data: values,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],
                             }]
                         },
                         options: {
                             responsive: true,
                             plugins: {
-                                legend: {
-                                    position: 'top',
-                                },
+                                legend: { position: 'top' },
                                 tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
-                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';  // Mostrar el total vendido con el nombre del plato
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';
                                         }
                                     }
                                 }
                             }
                         }
                     });
-                }).fail(function () {
-                    console.log("Error al obtener los datos para el gráfico.");
                 });
             }
+
+            // Botones
+            $("#mensualBtn").click(function () {
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = today.getMonth() + 1;
+                cargarGraficoPlatos(`/Dashboard/ObtenerTopPlatosMensual?year=${year}&month=${month}`);
+            });
+
+            $("#semanalBtn").click(function () {
+                cargarGraficoPlatos('/Dashboard/ObtenerTopPlatosSemanal');
+            });
+
+            $("#hoyBtn").click(function () {
+                cargarGraficoPlatos('/Dashboard/ObtenerTopPlatosHoy');
+            });
+
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+                cargarGraficoPlatos(`/Dashboard/ObtenerTopPlatosRango?startDate=${startDate}&endDate=${endDate}`);
+            });
+
+            // Carga inicial (Mensual)
+            $("#mensualBtn").click();
         });
     </script>
+
+
 
 
     <script>
-        $(document).ready(function () {
-            // Llamar a la función para cargar los datos de los combos al cargar la página
-            cargarGraficoCombos();
+                $(document).ready(function () {
+            function cargarGraficoCombos(url) {
+                $.get(url, function (data) {
+                    var labels = data.map(item => item.nombre);
+                    var values = data.map(item => item.totalVendidos);
 
-            function cargarGraficoCombos() {
-                $.get('/Dashboard/ObtenerTopCombos', function (data) {
-                    console.log(data);  // Verificar los datos que se reciben
-
-                    // Verificamos que los datos sean correctos
-                    if (data.length === 0) {
-                        console.log("No hay datos para mostrar en el gráfico.");
-                        return;
-                    }
-
-                    // Extraer los datos que necesitamos para la gráfica
-                    var labels = data.map(function (item) { return item.nombre; });  // Usamos 'nombre' para los combos
-                    var dataCombos = data.map(function (item) { return item.totalVendidos; });  // Usamos 'totalVendidos'
-
-                    // Crear el gráfico de pastel
                     var ctx = document.getElementById('combosChart').getContext('2d');
-                    var pieChart = new Chart(ctx, {
+                    if (window.chartCombos) {
+                        window.chartCombos.destroy();
+                    }
+                    window.chartCombos = new Chart(ctx, {
                         type: 'pie',
                         data: {
-                            labels: labels,  // Los nombres de los combos
+                            labels: labels,
                             datasets: [{
-                                data: dataCombos,  // Los totales vendidos de cada combo
-                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],  // Colores para cada sección
+                                data: values,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],
                             }]
                         },
                         options: {
                             responsive: true,
                             plugins: {
-                                legend: {
-                                    position: 'top',
-                                },
+                                legend: { position: 'top' },
                                 tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
-                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';  // Mostrar el total vendido con el nombre del combo
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';
                                         }
                                     }
                                 }
                             }
                         }
                     });
-                }).fail(function () {
-                    console.log("Error al obtener los datos para el gráfico.");
                 });
             }
-        });
-    </script>
 
+            // Botones
+            $("#mensualBtn").click(function () {
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = today.getMonth() + 1;
+                cargarGraficoCombos(`/Dashboard/ObtenerTopCombosMensual?year=${year}&month=${month}`);
+            });
+
+            $("#semanalBtn").click(function () {
+                cargarGraficoCombos('/Dashboard/ObtenerTopCombosSemanal');
+            });
+
+            $("#hoyBtn").click(function () {
+                cargarGraficoCombos('/Dashboard/ObtenerTopCombosHoy');
+            });
+
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+                cargarGraficoCombos(`/Dashboard/ObtenerTopCombosRango?startDate=${startDate}&endDate=${endDate}`);
+            });
+
+            // Carga inicial (Mensual)
+            $("#mensualBtn").click();
+        });
+
+
+    </script>
 

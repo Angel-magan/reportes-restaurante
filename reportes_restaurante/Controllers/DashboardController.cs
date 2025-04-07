@@ -20,70 +20,60 @@ namespace reportes_restaurante.Controllers
 
         public IActionResult Index()
         {
-            var today = DateTime.Today;  // Obtener la fecha de hoy
+            var today = DateTime.Today;
 
 
-
-            // Mesas Ocupadas: contarlas si tienen un pedido abierto hoy
-            var mesasOcupadas = _context.Pedido_Local
-                .Where(p => p.estado == "Abierta" && p.fechaApertura.Date == today)
-                .Select(p => p.id_mesa)
-                .Distinct()
+            var mesasOcupadas = _context.mesas
+                .Where(m => m.disponibilidad == "ocupado")  // Filtrar solo las mesas con disponibilidad 'ocupado'
                 .Count();
 
-            // Pedidos Abiertos: contar los pedidos abiertos hoy
+
             var pedidosAbiertos = _context.Pedido_Local
                 .Where(p => p.estado == "Abierta" && p.fechaApertura.Date == today)
                 .Count();
 
-            // Pedidos en Proceso: contar los detalles de pedidos cuyo estado sea "En Proceso"
+            
             var pedidosEnProceso = _context.Pedido_Local
                 .Where(pl => pl.fechaApertura.Date == today)
                 .Join(_context.Detalle_Pedido,
-                    pl => pl.id_pedido,    // Unir por id_pedido
-                    dp => dp.encabezado_id, // Unir por encabezado_id (referencia a Pedido_Local)
+                    pl => pl.id_pedido,    
+                    dp => dp.encabezado_id, 
                     (pl, dp) => new { pl, dp })
                 .Where(x => x.dp.estado == "En Proceso")
                 .Count();
 
-            // Pedidos Pendientes: contar los detalles de pedidos cuyo estado sea "Pendiente"
             var pedidosPendientes = _context.Pedido_Local
                 .Where(pl => pl.fechaApertura.Date == today)
                 .Join(_context.Detalle_Pedido,
-                    pl => pl.id_pedido,    // Unir por id_pedido
-                    dp => dp.encabezado_id, // Unir por encabezado_id (referencia a Pedido_Local)
+                    pl => pl.id_pedido,    
+                    dp => dp.encabezado_id, 
                     (pl, dp) => new { pl, dp })
                 .Where(x => x.dp.estado == "Pendiente")
                 .Count();
 
-            // Pedidos Finalizados: contar los detalles de pedidos cuyo estado sea "Finalizado"
+         
             var pedidosFinalizados = _context.Pedido_Local
                 .Where(pl => pl.fechaApertura.Date == today)
                 .Join(_context.Detalle_Pedido,
-                    pl => pl.id_pedido,    // Unir por id_pedido
-                    dp => dp.encabezado_id, // Unir por encabezado_id (referencia a Pedido_Local)
+                    pl => pl.id_pedido,    
+                    dp => dp.encabezado_id,
                     (pl, dp) => new { pl, dp })
                 .Where(x => x.dp.estado == "Finalizado")
                 .Count();
 
-            // Cuentas Cerradas: contar las facturas cuya fecha sea hoy
-            var cuentasCerradas = _context.Factura
-                .Where(f => f.fecha.Date == today)
-                .Count();
 
-            // Pasar los resultados a la vista
+        
             ViewBag.MesasOcupadas = mesasOcupadas;
             ViewBag.PedidosAbiertos = pedidosAbiertos;
             ViewBag.PedidosEnProceso = pedidosEnProceso;
-            ViewBag.PedidosPendientes = pedidosPendientes;  // Pasar el valor de pedidos pendientes
+            ViewBag.PedidosPendientes = pedidosPendientes;  
             ViewBag.PedidosFinalizados = pedidosFinalizados;
-            ViewBag.CuentasCerradas = cuentasCerradas;
+        
 
 
-           // Llamar al método CalcularIngresos para obtener los valores
             var ingresos = CalcularIngresos();
 
-            // Pasar los resultados de ingresos a la vista usando ViewBag
+         
             ViewBag.IngresosLocales = ingresos.ingresosLocales;
             ViewBag.IngresosEnLinea = ingresos.ingresosEnLinea;
             ViewBag.IngresosTotales = ingresos.ingresosTotales;
@@ -276,31 +266,49 @@ namespace reportes_restaurante.Controllers
 
 
 
+        [HttpGet]
+        public IActionResult ObtenerTopPlatosMensual(int year, int month)
+        {
+            var topPlatos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
+                .Join(_context.platos,
+                    dp => dp.detalle.item_id,
+                    plato => plato.id,
+                    (dp, plato) => new { PlatoId = plato.id, Nombre = plato.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.PlatoId, x.Nombre })
+                .Select(g => new { g.Key.PlatoId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
 
+            return Json(topPlatos);
+        }
 
         [HttpGet]
-        public IActionResult ObtenerTopPlatos()
+        public IActionResult ObtenerTopPlatosSemanal()
         {
-            // Primero obtenemos todos los detalles de los pedidos con tipo "Plato"
+            // Calcular el rango semanal
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Esto debería calcular el domingo como inicio de la semana
+
             var topPlatos = _context.Detalle_Pedido
-                .Where(dp => dp.tipo_Item == "Plato")
-                .Join(_context.platos, dp => dp.item_id, plato => plato.id,
-                    (dp, plato) => new
-                    {
-                        PlatoId = plato.id,
-                        Nombre = plato.nombre,
-                        CantidadVendida = dp.cantidad
-                    })
-                .AsEnumerable()  // Convertimos a memoria para hacer la agrupación y la suma en el cliente
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today) // Filtrar por el rango semanal
+                .Join(_context.platos,
+                    dp => dp.detalle.item_id,
+                    plato => plato.id,
+                    (dp, plato) => new { PlatoId = plato.id, Nombre = plato.nombre, CantidadVendida = dp.detalle.cantidad })
                 .GroupBy(x => new { x.PlatoId, x.Nombre })
-                .Select(g => new
-                {
-                    PlatoId = g.Key.PlatoId,
-                    Nombre = g.Key.Nombre,
-                    TotalVendidos = g.Sum(x => x.CantidadVendida)
-                })
-                .OrderByDescending(x => x.TotalVendidos)  // Ordenamos por el total vendido de forma descendente
-                .Take(5)  // Tomamos los 5 primeros
+                .Select(g => new { g.Key.PlatoId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
                 .ToList();
 
             return Json(topPlatos);
@@ -308,35 +316,147 @@ namespace reportes_restaurante.Controllers
 
 
         [HttpGet]
-        public IActionResult ObtenerTopCombos()
+        public IActionResult ObtenerTopPlatosHoy()
         {
-        
+            var today = DateTime.Today;
+
+            var topPlatos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date == today) // Filtrar por día actual
+                .Join(_context.platos,
+                    dp => dp.detalle.item_id,
+                    plato => plato.id,
+                    (dp, plato) => new { PlatoId = plato.id, Nombre = plato.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.PlatoId, x.Nombre })
+                .Select(g => new { g.Key.PlatoId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
+
+            return Json(topPlatos);
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerTopPlatosRango(DateTime startDate, DateTime endDate)
+        {
+            var topPlatos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
+                .Join(_context.platos,
+                    dp => dp.detalle.item_id,
+                    plato => plato.id,
+                    (dp, plato) => new { PlatoId = plato.id, Nombre = plato.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.PlatoId, x.Nombre })
+                .Select(g => new { g.Key.PlatoId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
+
+            return Json(topPlatos);
+        }
+
+
+
+
+        [HttpGet]
+        public IActionResult ObtenerTopCombosMensual(int year, int month)
+        {
             var topCombos = _context.Detalle_Pedido
-                .Where(dp => dp.tipo_Item == "Combo")
-                .Join(_context.combos, dp => dp.item_id, combo => combo.id,
-                    (dp, combo) => new
-                    {
-                        ComboId = combo.id,
-                        Nombre = combo.nombre,
-                        CantidadVendida = dp.cantidad
-                    })
-                .AsEnumerable()  
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
+                .Join(_context.combos,
+                    dp => dp.detalle.item_id,
+                    combo => combo.id,
+                    (dp, combo) => new { ComboId = combo.id, Nombre = combo.nombre, CantidadVendida = dp.detalle.cantidad })
                 .GroupBy(x => new { x.ComboId, x.Nombre })
-                .Select(g => new
-                {
-                    ComboId = g.Key.ComboId,
-                    Nombre = g.Key.Nombre,
-                    TotalVendidos = g.Sum(x => x.CantidadVendida)
-                })
-                .OrderByDescending(x => x.TotalVendidos) 
-                .Take(5)  
+                .Select(g => new { g.Key.ComboId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
+
+            return Json(topCombos);
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerTopCombosSemanal()
+        {
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+
+            var topCombos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today)
+                .Join(_context.combos,
+                    dp => dp.detalle.item_id,
+                    combo => combo.id,
+                    (dp, combo) => new { ComboId = combo.id, Nombre = combo.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.ComboId, x.Nombre })
+                .Select(g => new { g.Key.ComboId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
+
+            return Json(topCombos);
+        }
+
+        [HttpGet]
+        public IActionResult ObtenerTopCombosHoy()
+        {
+            var today = DateTime.Today;
+
+            var topCombos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date == today)
+                .Join(_context.combos,
+                    dp => dp.detalle.item_id,
+                    combo => combo.id,
+                    (dp, combo) => new { ComboId = combo.id, Nombre = combo.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.ComboId, x.Nombre })
+                .Select(g => new { g.Key.ComboId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
                 .ToList();
 
             return Json(topCombos);
         }
 
 
+        [HttpGet]
+        public IActionResult ObtenerTopCombosRango(DateTime startDate, DateTime endDate)
+        {
+            var topCombos = _context.Detalle_Pedido
+                .Join(_context.Pedido_Local,
+                    detalle => detalle.encabezado_id,
+                    pedido => pedido.id_pedido,
+                    (detalle, pedido) => new { detalle, pedido })
+                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
+                .Join(_context.combos,
+                    dp => dp.detalle.item_id,
+                    combo => combo.id,
+                    (dp, combo) => new { ComboId = combo.id, Nombre = combo.nombre, CantidadVendida = dp.detalle.cantidad })
+                .GroupBy(x => new { x.ComboId, x.Nombre })
+                .Select(g => new { g.Key.ComboId, g.Key.Nombre, TotalVendidos = g.Sum(x => x.CantidadVendida) })
+                .OrderByDescending(x => x.TotalVendidos)
+                .Take(5)
+                .ToList();
 
+            return Json(topCombos);
+        }
 
     }
 
