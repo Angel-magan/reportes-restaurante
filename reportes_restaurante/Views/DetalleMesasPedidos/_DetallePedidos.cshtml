@@ -28,7 +28,7 @@
         </section>
     </div>
     <div class="d-flex justify-content-between mt-2">
-        <div class="w-50">
+        <div class="w-50" style="max-height: 400px; overflow-y: auto;">
             @foreach (var item in (IEnumerable<dynamic>)ViewBag.Pedido)
             {
                 <section class="p-3 rounded mb-3 text-light" style="background-color: #003653">
@@ -48,12 +48,12 @@
             <p>MESERO: <span id="NombreMesero"></span></p>
             <p>
                 PLATOS:
-                <div class="text-center" id="DetPedidoPlatos">
+                <div class="text-center" id="DetPedidoPlatos" style="max-height: 100px; overflow-y: auto;">
                 </div>
             </p>
             <p>
                 COMBOS:
-                <div class="text-center" id="DetPedidoCombos">
+                <div class="text-center" id="DetPedidoCombos" style="max-height: 100px; overflow-y: auto;">
                 </div>
             </p>
             <p>TOTAL: <span id="TotalCuenta">$0</span></p>

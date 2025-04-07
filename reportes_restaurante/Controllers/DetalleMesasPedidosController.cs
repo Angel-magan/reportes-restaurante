@@ -65,10 +65,18 @@ namespace reportes_restaurante.Controllers
         }
 
         [HttpPost]
-        public ActionResult DetallePedidos(string estado = "Abierta")
+        public ActionResult DetallePedidos(string estado = "Abierta", bool tipoVenta = false)
         {
             if (estado.Equals("Todos"))
             {
+                if (tipoVenta)
+                {
+
+                }
+                else
+                {
+
+                }
                 var pedido = (from p in _context.Pedido_Local
                               join m in _context.mesas
                               on p.id_mesa equals m.id
@@ -107,7 +115,7 @@ namespace reportes_restaurante.Controllers
                                on p.id_pedido equals dp.encabezado_id
                                join pl in _context.platos
                                on dp.item_id equals pl.id
-                               where p.id_pedido == id_pedido
+                               where p.id_pedido == id_pedido && dp.tipo_item == "Plato"
                                select new
                                {
                                    Estado = dp.estado,
@@ -125,7 +133,7 @@ namespace reportes_restaurante.Controllers
                                on p.id_pedido equals dp.encabezado_id
                                join c in _context.combos
                                on dp.item_id equals c.id
-                               where p.id_pedido == id_pedido
+                               where p.id_pedido == id_pedido && dp.tipo_item == "Combo"
                                select new
                                {
                                    Estado = dp.estado,
