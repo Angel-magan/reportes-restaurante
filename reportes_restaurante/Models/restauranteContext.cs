@@ -11,6 +11,9 @@ namespace reportes_restaurante.Models
         public DbSet<Factura> Factura { get; set; }
         public DbSet<empleados> empleados { get; set; }
         public DbSet<cargo> cargo { get; set; }
+        public DbSet<Pedido_Local> Pedido_Local { get; set; }
+
+        public DbSet<Detalle_Pedido> Detalle_Pedido { get; set; }
 
         //es una función de sql server para obtener semanas por mes 
         [DbFunction("GetIsoWeek", "dbo")]

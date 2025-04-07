@@ -1,0 +1,197 @@
+﻿
+<head>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+
+
+<div class="container">
+
+
+    <div class="d-flex align-items-center gap-3 mt-3">
+        <!-- Botones DASHBOARD y PEDIDOS -->
+        <a href="/" class="btn text-black" style="background-color: #ffd734">DASHBOARD</a>
+        <a href="/" class="btn text-black" style="background-color: #ffd734">PEDIDOS</a>
+
+        <!-- Espaciador grande -->
+        <div class="ms-auto"></div>
+
+        <!-- Botones para rangos -->
+        <div class="d-flex gap-2">
+            <button class="btn text-black" style="background-color: #ffd734">MENSUAL</button>
+            <button class="btn text-black" style="background-color: #ffd734">SEMANAL</button>
+            <button class="btn text-black" style="background-color: #ffd734">HOY</button>
+            <button class="btn text-white" style="background-color: #800000">MOSTRAR</button>
+        </div>
+
+        <!-- Selector de rango de fechas -->
+        <div>
+            <label for="startDate" class="form-label mb-0">Fecha Inicio:</label>
+            <input type="date" id="startDate" class="form-control">
+        </div>
+        <div>
+            <label for="endDate" class="form-label mb-0">Fecha Fin:</label>
+            <input type="date" id="endDate" class="form-control">
+        </div>
+    </div>
+
+
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center">
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.MesasOcupadas</p>
+                <p class="fw-bold">MESAS OCUPADAS</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosAbiertos</p>
+                <p class="fw-bold">PEDIDOS ABIERTOS</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosEnProceso</p>
+                <p class="fw-bold">PEDIDOS EN PROCESO</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosPendientes</p>
+                <p class="fw-bold">PEDIDOS PENDIENTES</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosFinalizados</p>
+                <p class="fw-bold">PEDIDOS FINALIZADOS</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.CuentasCerradas</p>
+                <p class="fw-bold">CUENTAS CERRADAS</p>
+            </section>
+        </div>
+    </div>
+
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <!-- Ingresos Totales Locales -->
+        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES LOCALES<br>@ViewBag.IngresosLocales.ToString("C")
+        </button>
+
+        <!-- Ingresos Totales en Línea -->
+        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES EN LÍNEA<br>@ViewBag.IngresosEnLinea.ToString("C")
+        </button>
+
+        <!-- Ingresos Totales Ambos -->
+        <button class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES AMBOS<br>@ViewBag.IngresosTotales.ToString("C")
+        </button>
+    </div>
+
+
+
+    <!-- Primera grafica-->
+    <div class="container">
+        
+
+        <div class="mt-5">
+			<p class="fw-bold">GRAFICO DE VENTAS</p>
+			
+            <canvas id="ventasChart">
+
+				
+            </canvas>
+
+
+    </div>
+
+</div>
+
+
+<script>
+        $(document).ready(function () {
+            // Obtener el mes y el año actual
+            var today = new Date();
+            var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+            var currentYear = today.getFullYear(); // Año actual
+
+            // Obtener el número de días del mes actual
+            var daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+            // Crear las fechas del mes actual (del 1 al N días del mes)
+            var days = [];
+            for (var i = 1; i <= daysInMonth; i++) {
+                days.push(i); // Días del mes (1 a N)
+            }
+
+            // Llamada AJAX para obtener las ventas por día
+            $.get('/Dashboard/ObtenerVentasPorDia', { year: currentYear, month: currentMonth }, function (data) {
+                console.log(data); // Verificar que los datos sean correctos
+
+                // Verificar si los datos están bien formados
+                if (!Array.isArray(data.ventas)) {
+                    console.error("Se esperaba un array pero se recibió:", data.ventas);
+                    alert("Error: Los datos no están bien formados.");
+                    return;
+                }
+
+                // Asegurar que todos los días tengan un valor (inicializado con 0)
+                var totalVentasPorDia = Array(daysInMonth).fill(0);
+
+                // Asignamos las ventas a los días correspondientes
+                data.ventas.forEach(function (venta) {
+                    var day = venta.fecha; // Día del mes (ahora se usa 'fecha' en lugar de 'Fecha')
+                    var totalVendido = venta.totalVendido;
+
+                    // Actualizamos el total vendido para el día correspondiente
+                    totalVentasPorDia[day - 1] = totalVendido; // El array tiene índices basados en 0, así que restamos 1
+                });
+
+                console.log("Ventas por día: ", totalVentasPorDia); // Verificar el array totalVentasPorDia
+
+                // Crear la gráfica con Chart.js
+                var ctx = document.getElementById('ventasChart').getContext('2d');
+                if (ctx) {
+                    // Destruir la instancia del gráfico existente si ya está creado
+                    if (window.chartInstance) {
+                        window.chartInstance.destroy();
+                    }
+
+                    // Crear el gráfico de líneas
+                    window.chartInstance = new Chart(ctx, {
+                        type: 'line', // Tipo de gráfico (línea)
+                        data: {
+                            labels: days, // Días del mes (de 1 a N)
+                            datasets: [{
+                                label: 'Ventas Diarias',
+                                data: totalVentasPorDia, // Total de ventas por día
+                                borderColor: 'rgba(75, 192, 192, 1)', // Color de la línea
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)', // Color de fondo de la línea
+                                borderWidth: 2,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+
+
+       
+
+
+</script>
