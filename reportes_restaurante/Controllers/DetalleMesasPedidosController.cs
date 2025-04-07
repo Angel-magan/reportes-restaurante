@@ -65,18 +65,10 @@ namespace reportes_restaurante.Controllers
         }
 
         [HttpPost]
-        public ActionResult DetallePedidos(string estado = "Abierta", bool tipoVenta = false)
+        public ActionResult DetallePedidos(string estado = "Abierta")
         {
             if (estado.Equals("Todos"))
             {
-                if (tipoVenta)
-                {
-
-                }
-                else
-                {
-
-                }
                 var pedido = (from p in _context.Pedido_Local
                               join m in _context.mesas
                               on p.id_mesa equals m.id
@@ -108,41 +100,83 @@ namespace reportes_restaurante.Controllers
             return PartialView("~/Views/DetalleMesasPedidos/_DetallePedidos.cshtml");  // Vista parcial para pedidos
         }
 
-        public JsonResult ObtenerDetPedidoPlatos(int id_pedido)
+        public JsonResult ObtenerDetPedidoPlatos(int id_pedido, string tipoVenta = "Local")
         {
-            var pedidoPlato = (from p in _context.Pedido_Local
-                               join dp in _context.Detalle_Pedido
-                               on p.id_pedido equals dp.encabezado_id
-                               join pl in _context.platos
-                               on dp.item_id equals pl.id
-                               where p.id_pedido == id_pedido && dp.tipo_item == "Plato"
-                               select new
-                               {
-                                   Estado = dp.estado,
-                                   Plato = pl.nombre,
-                                   Cantidad = dp.cantidad,
-                                   Subtotal = dp.subtotal
-                               }).ToList();
-
-            return Json(pedidoPlato);
+            if (tipoVenta.Equals("Local"))
+            {
+                var pedidoPlato = (from p in _context.Pedido_Local
+                                   join dp in _context.Detalle_Pedido
+                                   on p.id_pedido equals dp.encabezado_id
+                                   join pl in _context.platos
+                                   on dp.item_id equals pl.id
+                                   where p.id_pedido == id_pedido && dp.tipo_item == "Plato" && dp.tipo_venta == tipoVenta
+                                   select new
+                                   {
+                                       Estado = dp.estado,
+                                       Plato = pl.nombre,
+                                       Cantidad = dp.cantidad,
+                                       Subtotal = dp.subtotal,
+                                       TipoVenta = dp.tipo_venta
+                                   }).ToList();
+                return Json(pedidoPlato);
+            }
+            else
+            {
+                var pedidoPlato = (from p in _context.Pedido_Local
+                                   join dp in _context.Detalle_Pedido
+                                   on p.id_pedido equals dp.encabezado_id
+                                   join pl in _context.platos
+                                   on dp.item_id equals pl.id
+                                   where p.id_pedido == id_pedido && dp.tipo_item == "Plato"
+                                   select new
+                                   {
+                                       Estado = dp.estado,
+                                       Plato = pl.nombre,
+                                       Cantidad = dp.cantidad,
+                                       Subtotal = dp.subtotal,
+                                       TipoVenta = dp.tipo_venta
+                                   }).ToList();
+                return Json(pedidoPlato);
+            }
         }
-        public JsonResult ObtenerDetPedidoCombos(int id_pedido)
+        public JsonResult ObtenerDetPedidoCombos(int id_pedido, string tipoVenta = "Local")
         {
-            var pedidoCombo = (from p in _context.Pedido_Local
-                               join dp in _context.Detalle_Pedido
-                               on p.id_pedido equals dp.encabezado_id
-                               join c in _context.combos
-                               on dp.item_id equals c.id
-                               where p.id_pedido == id_pedido && dp.tipo_item == "Combo"
-                               select new
-                               {
-                                   Estado = dp.estado,
-                                   Combo = c.nombre,
-                                   Cantidad = dp.cantidad,
-                                   Subtotal = dp.subtotal
-                               }).ToList();
-
-            return Json(pedidoCombo);
+            if (tipoVenta.Equals("Local"))
+            {
+                var pedidoCombo = (from p in _context.Pedido_Local
+                                   join dp in _context.Detalle_Pedido
+                                   on p.id_pedido equals dp.encabezado_id
+                                   join c in _context.combos
+                                   on dp.item_id equals c.id
+                                   where p.id_pedido == id_pedido && dp.tipo_item == "Combo" && dp.tipo_venta == tipoVenta
+                                   select new
+                                   {
+                                       Estado = dp.estado,
+                                       Combo = c.nombre,
+                                       Cantidad = dp.cantidad,
+                                       Subtotal = dp.subtotal,
+                                       TipoVenta = dp.tipo_venta
+                                   }).ToList();
+                return Json(pedidoCombo);
+            }
+            else
+            {
+                var pedidoCombo = (from p in _context.Pedido_Local
+                                   join dp in _context.Detalle_Pedido
+                                   on p.id_pedido equals dp.encabezado_id
+                                   join c in _context.combos
+                                   on dp.item_id equals c.id
+                                   where p.id_pedido == id_pedido && dp.tipo_item == "Combo"
+                                   select new
+                                   {
+                                       Estado = dp.estado,
+                                       Combo = c.nombre,
+                                       Cantidad = dp.cantidad,
+                                       Subtotal = dp.subtotal,
+                                       TipoVenta = dp.tipo_venta
+                                   }).ToList();
+                return Json(pedidoCombo);
+            }
         }
         public JsonResult ObtenerEncabezadoPedido(int id_pedido)
         {
