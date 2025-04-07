@@ -2,88 +2,56 @@
 
 @{
     ViewData["Title"] = "Detalle mesas";
+    int contador = 0;
 }
 
 <div>
     <div class="d-flex justify-content-between align-items-center">
-        <section class="mb-5">
-            <button class="btn btn-secondary">MOSTRAR</button>
+        <section>
+            <button id="1" value="Pendiente" class="btn-filtro bg-light btn btn-secondary text-black">PENDIENTE</button>
+            <div id="circulo-1" class="estado-circulo bg-dark rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
         <section>
-            <button class="bg-light btn btn-secondary text-black">SOLICITADO</button>
-            <div class="bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
+            <button id="2" value="En Proceso" class="btn-filtro bg-light btn btn-secondary text-black">EN PROCESO</button>
+            <div id="circulo-2" class="estado-circulo bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
         <section>
-            <button class="bg-light btn btn-secondary text-black">EN PROCESO</button>
-            <div class="bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
+            <button id="3" value="Finalizado" class="btn-filtro bg-light btn btn-secondary text-black">ENTREGADO</button>
+            <div id="circulo-3" class="estado-circulo bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
         <section>
-            <button class="bg-light btn btn-secondary text-black">ENTREGADO</button>
-            <div class="bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
+            <button id="4" value="Cancelado" class="btn-filtro bg-light btn btn-secondary text-black">CANCELADO</button>
+            <div id="circulo-4" class="estado-circulo bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
         <section>
-            <button class="bg-light btn btn-secondary text-black">TODOS</button>
-            <div class="bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
+            <button id="5" value="Todos" class="btn-filtro bg-light btn btn-secondary text-black">TODOS</button>
+            <div id="circulo-5" class="estado-circulo bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
         <section>
-            <button class="bg-light btn btn-secondary text-black">MESAS DISPONIBLES</button>
-            <div class="bg-dark rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
+            <button id="6" value="MesasDisp" class="btn-filtro bg-light btn btn-secondary text-black">MESAS DISPONIBLES</button>
+            <div id="circulo-6" class="estado-circulo bg-light rounded-circle mt-3 mx-auto" style="width: 30px; height: 30px;"></div>
         </section>
     </div>
     <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center">
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 1</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 2</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 3</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 4</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 5</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-        </div>
-        <div class="d-flex justify-content-between align-items-center mt-5">
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 6</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 7</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 8</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 9</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
-            <section class="text-center border border-1 p-2">
-                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
-                <p class="fw-bold">MESA 10</p>
-                <p>PEDIDO SOLICITADO</p>
-            </section>
+        <div class="row">
+            @foreach (var item in (IEnumerable<dynamic>)ViewBag.Pedido)
+            {
+                <div class="col-2 col-md-2 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-center">@item.Mesa</h5>
+                            <p class="card-text text-center">@item.Estado</p>
+                        </div>
+                    </div>
+                </div>
+
+                contador++;
+
+                if (contador % 6 == 0)
+                {
+                    <div class="row"></div>
+                }
+            }
         </div>
     </div>
 </div>

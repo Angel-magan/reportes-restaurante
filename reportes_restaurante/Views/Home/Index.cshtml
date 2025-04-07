@@ -29,8 +29,8 @@
         // Cuando se haga clic en el botón "Ver Detalle de Mesas"
         $("#btnMesas").click(function () {
             $.ajax({
-                url: '@Url.Action("DetalleMesas", "Home")',
-                type: 'GET',
+                url: '@Url.Action("DetalleMesas", "DetalleMesasPedidos")',
+                type: 'POST',
                 success: function (data) {
                     // Cargar la vista parcial en el div
                     $('#contenidoDetalles').html(data);
@@ -44,8 +44,8 @@
         // Cuando se haga clic en el botón "Ver Detalle de Pedidos"
         $("#btnPedidos").click(function () {
             $.ajax({
-                url: '@Url.Action("DetallePedidos", "Home")',
-                type: 'GET',
+                url: '@Url.Action("DetallePedidos", "DetalleMesasPedidos")',
+                type: 'POST',
                 success: function (data) {
                     // Cargar la vista parcial en el div
                     $('#contenidoDetalles').html(data);
@@ -54,6 +54,76 @@
                     alert('Error al cargar los detalles de pedidos.');
                 }
             });
+        });
+
+        $(document).on('click', '.btn-filtro', function () {
+            var filtro = $(this).val();
+            var btnId = $(this).attr("id");
+
+            $.ajax({
+                url: '@Url.Action("DetalleMesas", "DetalleMesasPedidos")',
+                type: 'POST',
+                data: { estado: filtro },
+                success: function (result) {
+                    $('#contenidoDetalles').html(result);
+                    $(".estado-circulo").removeClass("bg-dark").addClass("bg-light");
+                    var circulo = $("#circulo-" + btnId);
+                    circulo.removeClass("bg-light").addClass("bg-dark");
+                },
+                error: function () {
+                    console.error("Error en la petición");
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-cuenta', function () {
+            var filtro = $(this).val();
+            var btnId = $(this).attr("id");
+
+            $.ajax({
+                url: '@Url.Action("DetallePedidos", "DetalleMesasPedidos")',
+                type: 'POST',
+                data: { estado: filtro },
+                success: function (result) {
+                    $('#contenidoDetalles').html(result);
+                    $(".estado-circulo").removeClass("bg-dark").addClass("bg-light");
+                    var circulo = $("#circulo-" + btnId);
+                    circulo.removeClass("bg-light").addClass("bg-dark");
+                },
+                error: function () {
+                    console.error("Error en la petición");
+                }
+            });
+        });
+
+        $(document).on('click', '.LblIdPedido', function () {
+
+            var Id = $(this).attr('id');
+            var Total = 0;
+            console.log("ID del pedido:", Id);
+
+            if (Id != 0) {
+                $.getJSON('/DetalleMesasPedidos/ObtenerEncabezadoPedido', { id_pedido: Id }, function (data) {
+                    $("#NumMesa").text(data[0].mesa || 'Información no disponible');
+                    $("#EstadoCuenta").text(data[0].cuenta || 'Información no disponible');
+                    $("#NombreMesero").text(data[0].mesero || 'Información no disponible');
+                });
+                $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoPlatos', { id_pedido: Id }, function (data) {
+                    $("#DetPedidoPlatos").empty();
+                    $.each(data, function (i, item) {
+                        $("#DetPedidoPlatos").append('<p>Estado: ' + item.estado + ' - Plato: ' + item.plato + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
+                        Total = Total + item.subtotal;
+                    });
+                });
+                $.getJSON('/DetalleMesasPedidos/ObtenerDetPedidoCombos', { id_pedido: Id }, function (data) {
+                    $("#DetPedidoCombos").empty();
+                    $.each(data, function (i, item) {
+                        $("#DetPedidoCombos").append('<p>Estado: ' + item.estado + ' - Combo: ' + item.combo + ' - Cantidad: ' + item.cantidad + ' - Subtotal: $' + item.subtotal + '</p>');
+                        Total = Total + item.subtotal;
+                    });
+                    $("#TotalCuenta").text('$' + Total || 'Información no disponible');
+                });
+            }
         });
     </script>
 }
