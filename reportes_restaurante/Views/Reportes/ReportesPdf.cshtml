@@ -1,0 +1,252 @@
+﻿@{
+    ViewData["Title"] = "Generar Reportes PDF";
+}
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Generar mas reportes</h2>
+
+    <!-- Reporte Diario -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h4>Reporte Diario</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="fechaReporteDiario">Fecha del reporte:</label>
+                    <input type="date" id="fechaReporteDiario" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="btnDescargarVentasDia" class="btn btn-danger w-100">
+                        <i class="fas fa-file-pdf me-2"></i> Descargar Reporte Diario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte Mensual -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h4>Reporte Mensual</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="selectMesPdf">Mes del reporte:</label>
+                    <select id="selectMesPdf" class="form-control">
+                        <option value="">Seleccione mes</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="selectAnioPdf">Año:</label>
+                    <select id="selectAnioPdf" class="form-control">
+                        @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year + 1; year++)
+                        {
+                            <option value="@year" selected="@(year == DateTime.Now.Year)">@year</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button id="btnDescargarVentasMes" class="btn btn-danger w-100">
+                        <i class="fas fa-file-pdf me-2"></i> Descargar Reporte Mensual
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte por Rango -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h4>Reporte por Rango de Fechas</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="fechaInicioPdf">Fecha inicio:</label>
+                    <input type="date" id="fechaInicioPdf" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="fechaFinPdf">Fecha fin:</label>
+                    <input type="date" id="fechaFinPdf" class="form-control">
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="btnDescargarPorRango" class="btn btn-danger w-100">
+                        <i class="fas fa-file-pdf me-2"></i> Descargar Reporte por Rango
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Reporte Diario Ventas en Línea -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h4>Reporte Diario - Ventas en Línea</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="fechaReporteLineaDiario">Fecha del reporte:</label>
+                <input type="date" id="fechaReporteLineaDiario" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <button id="btnDescargarVentasLineaDia" class="btn btn-success w-100">
+                    <i class="fas fa-file-pdf me-2"></i> Descargar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reporte Mensual Ventas en Línea -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h4>Reporte Mensual - Ventas en Línea</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="selectMesLinea">Mes del reporte:</label>
+                <select id="selectMesLinea" class="form-control">
+                    <option value="">Seleccione mes</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="selectAnioLinea">Año:</label>
+                <select id="selectAnioLinea" class="form-control">
+                    @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year + 1; year++)
+                    {
+                        <option value="@year" selected="@(year == DateTime.Now.Year)">@year</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button id="btnDescargarVentasLineaMes" class="btn btn-success w-100">
+                    <i class="fas fa-file-pdf me-2"></i> Descargar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Botón para volver -->
+    <div class="text-center mt-4">
+        <a href="@Url.Action("DashboardReportes", "Reportes")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Configuración de fechas por defecto para el rango
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+            $('#fechaInicioPdf').val(primerDiaMes.toISOString().split('T')[0]);
+            $('#fechaFinPdf').val(hoy.toISOString().split('T')[0]);
+
+            // Reporte Diario
+            $('#btnDescargarVentasDia').on('click', function () {
+                const fechaSeleccionada = $('#fechaReporteDiario').val();
+
+                if (!fechaSeleccionada) {
+                    alert('Por favor seleccione una fecha válida');
+                    return;
+                }
+
+                // Validar que la fecha no sea futura
+                const fechaActual = new Date().toISOString().split('T')[0];
+                if (fechaSeleccionada > fechaActual) {
+                    if (!confirm('La fecha seleccionada es futura. ¿Desea continuar?')) {
+                        return;
+                    }
+                }
+
+                window.location.href = `/Reportes/DescargarPdfVentasDia?fecha=${fechaSeleccionada}`;
+            });
+
+            // Reporte Mensual
+            $('#btnDescargarVentasMes').on('click', function () {
+                const mes = $('#selectMesPdf').val();
+                const anio = $('#selectAnioPdf').val();
+
+                if (!mes) {
+                    alert('Por favor seleccione un mes');
+                    return;
+                }
+
+                if (!anio) {
+                    alert('Por favor seleccione un año');
+                    return;
+                }
+
+                // Validar que no sea un mes futuro
+                const fechaActual = new Date();
+                const mesActual = fechaActual.getMonth() + 1;
+                const anioActual = fechaActual.getFullYear();
+
+                if (anio > anioActual || (anio == anioActual && mes > mesActual)) {
+                    if (!confirm('El mes seleccionado es futuro. ¿Desea continuar?')) {
+                        return;
+                    }
+                }
+
+                window.location.href = `/Reportes/DescargarPdfVentasMes?año=${anio}&mes=${mes}`;
+            });
+
+            // Reporte por Rango
+            $('#btnDescargarPorRango').on('click', function () {
+                const fechaInicio = $('#fechaInicioPdf').val();
+                const fechaFin = $('#fechaFinPdf').val();
+
+                if (!fechaInicio || !fechaFin) {
+                    alert('Seleccione ambas fechas');
+                    return;
+                }
+
+                if (fechaInicio > fechaFin) {
+                    alert('La fecha de inicio no puede ser mayor a la fecha final');
+                    return;
+                }
+
+                window.location.href = `/Reportes/DescargarPdfPorRango?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+            });
+        });
+    </script>
+    <script src="~/js/ventasEnLineaPorDia.js"></script>
+    <script src="~/js/ventasEnLineaPorMes.js"></script>
+    
+}
