@@ -359,17 +359,15 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
         {
             try
             {
-                // Primero obtener todas las facturas
+                // 1. Obtener datos (igual a tu código original)
                 var facturas = _context.Factura
                     .Where(f => f.fecha.Date == fecha.Date)
                     .ToList();
 
-                // Luego obtener los detalles para cada factura
                 var ventasDelDia = new List<dynamic>();
 
                 foreach (var f in facturas)
                 {
-                    // Obtener detalles de la factura con el nombre del ítem
                     var detalles = _context.Detalle_Factura
                         .Where(df => df.factura_id == f.factura_id)
                         .Join(_context.Detalle_Pedido,
@@ -378,24 +376,16 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
                             (df, dp) => new
                             {
                                 DetallePedido = dp,
-                                NombreItem = dp.tipo_item == "Plato" ?
-                                    _context.platos
-                                        .Where(p => p.id == dp.item_id)
-                                        .Select(p => p.nombre)
-                                        .FirstOrDefault() :
-                                    _context.combos
-                                        .Where(c => c.id == dp.item_id)
-                                        .Select(c => c.nombre)
-                                        .FirstOrDefault()
+                                NombreItem = dp.tipo_item == "Plato"
+                                    ? _context.platos.FirstOrDefault(p => p.id == dp.item_id).nombre
+                                    : _context.combos.FirstOrDefault(c => c.id == dp.item_id).nombre
                             })
                         .ToList();
 
-                    // Obtener empleado
                     var empleado = _context.empleados
                         .AsNoTracking()
                         .FirstOrDefault(e => e.id == f.empleado_id);
 
-                    // Obtener mesa si es local
                     int? mesa = null;
                     if (f.tipo_venta == "LOCAL")
                     {
@@ -421,26 +411,47 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
                             d.NombreItem,
                             PrecioUnitario = d.DetallePedido.subtotal / d.DetallePedido.cantidad
                         }),
-                        Empleado = empleado,
+                        Empleado = empleado != null ? new { empleado.nombre, empleado.apellido } : null,
                         Mesa = mesa
                     });
                 }
 
-                var htmlContent = GenerarHtmlPdfVentasDia(ventasDelDia, fecha);
+                if (!ventasDelDia.Any())
+                {
+                    return Content("No hay ventas para esta fecha");
+                }
 
+                // 2. Calcular total del día
+                decimal totalDia = ventasDelDia.Sum(v => (decimal)v.Factura.total);
+
+                // 3. Preparar modelo para la vista
+                var model = new
+                {
+                    Ventas = ventasDelDia,
+                    Fecha = fecha,
+                    TotalDia = totalDia,
+                    FechaReporte = DateTime.Now.ToString("dd/MM/yyyy")
+                };
+
+                // 4. Nombre correcto de la vista: "ReportesVentaDiaLocal"
+
+                string viewName = "ReporteVentaDiaLocal";
+                string htmlContent = RenderViewToString(viewName, model);
+
+                // 5. Generar PDF
                 var pdf = new HtmlToPdfDocument()
                 {
                     GlobalSettings = {
-        PaperSize = PaperKind.A4,
-        Orientation = Orientation.Portrait,
-        Margins = new MarginSettings { Top = 10, Bottom = 10, Left = 10, Right = 10 }
-    },
+                PaperSize = PaperKind.A4,
+                Orientation = Orientation.Portrait,
+                Margins = new MarginSettings { Top = 10, Bottom = 10, Left = 10, Right = 10 }
+            },
                     Objects = {
-        new ObjectSettings() {
-            HtmlContent = htmlContent,
-            WebSettings = { DefaultEncoding = "utf-8" }
-        }
-    }
+                new ObjectSettings() {
+                    HtmlContent = htmlContent,
+                    WebSettings = { DefaultEncoding = "utf-8" }
+                }
+            }
                 };
 
                 var pdfBytes = _converter.Convert(pdf);
@@ -450,105 +461,6 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             {
                 return Content($"Error al generar el PDF: {ex.Message}");
             }
-        }
-
-        private string GenerarHtmlPdfVentasDia(List<dynamic> ventas, DateTime fecha)
-        {
-            var html = new StringBuilder();
-            html.Append(@"
-<html>
-<head>
-    <meta charset='UTF-8'>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #af1717; }
-        h2 { color: #333; }
-        .report-date { margin-bottom: 20px; }
-        .venta { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .cliente-info { margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
-        th { background-color: #af1717; color: white; padding: 10px; text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid #ddd; }
-        .total-venta { text-align: right; font-weight: bold; margin-top: 10px; }
-        .total-dia { text-align: right; font-weight: bold; font-size: 1.2em; margin-top: 30px; }
-        .comentarios { font-style: italic; color: #666; }
-    </style>
-</head>
-<body>
-    <div class='header'>
-        <h1>Restaurante Foodie</h1>
-        <h2>Ventas locales por día</h2>
-        <div class='report-date'>Reporte generado el " + DateTime.Now.ToString("dd/MM/yyyy") + @"</div>
-    </div>");
-
-            decimal totalDia = 0;
-
-            foreach (var venta in ventas)
-            {
-                var factura = venta.Factura as Factura;
-                totalDia += factura.total;
-
-                html.Append(@"
-    <div class='venta'>
-        <div class='cliente-info'>
-            <strong>Cliente:</strong> " + factura.cliente_nombre + @"<br>
-            <strong>Atendió:</strong> " + venta.Empleado?.nombre + " " + venta.Empleado?.apellido + @"
-        </div>");
-
-                if (venta.Mesa != null)
-                {
-                    html.Append(@"<div><strong>Mesa:</strong> " + venta.Mesa + @"</div>");
-                }
-
-                html.Append(@"
-        <table>
-            <thead>
-                <tr>
-                    <th>Platillo</th>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>");
-
-                foreach (var detalle in venta.Detalles)
-                {
-                    html.Append(@"
-                <tr>
-                    <td>" + detalle.NombreItem + @"</td>
-                    <td>" + detalle.tipo_item + @"</td>
-                    <td>" + detalle.cantidad + @"</td>
-                    <td>$" + detalle.PrecioUnitario.ToString("N2") + @"</td>
-                    <td>$" + detalle.subtotal.ToString("N2") + @"</td>
-                </tr>");
-
-                    if (!string.IsNullOrEmpty(detalle.comentarios))
-                    {
-                        html.Append(@"
-                <tr>
-                    <td colspan='5' class='comentarios'>
-                        <strong>Notas:</strong> " + detalle.comentarios + @"
-                    </td>
-                </tr>");
-                    }
-                }
-
-                html.Append(@"
-            </tbody>
-        </table>
-        <div class='total-venta'>TOTAL FACTURA: $" + factura.total.ToString("N2") + @"</div>
-    </div>");
-            }
-
-            html.Append(@"
-    <div class='total-dia'>TOTAL DEL DÍA: $" + totalDia.ToString("N2") + @"</div>
-</body>
-</html>");
-
-            return html.ToString();
         }
 
         private string ObtenerNombreItem(Detalle_Pedido detalle)
@@ -1707,9 +1619,245 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
         }
 
 
+        [HttpGet]
+        public IActionResult DescargarPdfVentasPorItem(string tipoItem, string periodo, DateTime? fecha, int? mes, int? año, DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            try
+            {
+                // Validar parámetros
+                if (string.IsNullOrEmpty(tipoItem) || (!fecha.HasValue && !mes.HasValue && !fechaInicio.HasValue))
+                {
+                    return Content("Parámetros no válidos");
+                }
+
+                // Determinar el rango de fechas según el periodo seleccionado
+                DateTime startDate, endDate;
+                string periodoTexto = "";
+
+                switch (periodo.ToLower())
+                {
+                    case "día":
+                        if (!fecha.HasValue) return Content("Fecha no válida");
+                        startDate = fecha.Value.Date;
+                        endDate = fecha.Value.Date.AddDays(1).AddSeconds(-1);
+                        periodoTexto = $"Día: {fecha.Value.ToString("dddd dd 'de' MMMM 'de' yyyy", new CultureInfo("es-ES"))}";
+                        break;
+
+                    case "mes":
+                        if (!mes.HasValue || !año.HasValue) return Content("Mes o año no válidos");
+                        startDate = new DateTime(año.Value, mes.Value, 1);
+                        endDate = startDate.AddMonths(1).AddSeconds(-1);
+                        periodoTexto = $"Mes: {CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(mes.Value)} {año.Value}";
+                        break;
+
+                    case "rango":
+                        if (!fechaInicio.HasValue || !fechaFin.HasValue) return Content("Rango de fechas no válido");
+                        startDate = fechaInicio.Value.Date;
+                        endDate = fechaFin.Value.Date.AddDays(1).AddSeconds(-1);
+                        periodoTexto = $"Rango Seleccionado: {fechaInicio.Value.ToString("dd/MM/yyyy")} - {fechaFin.Value.ToString("dd/MM/yyyy")}";
+                        break;
+
+                    default:
+                        return Content("Tipo de período no válido");
+                }
+
+                // Obtener las facturas en el rango de fechas
+                var facturas = _context.Factura
+                    .Where(f => f.fecha >= startDate && f.fecha <= endDate)
+                    .OrderBy(f => f.fecha)
+                    .ToList();
+
+                // Obtener los detalles agrupados por item
+                var ventasPorItem = facturas
+                    .SelectMany(f => _context.Detalle_Factura
+                        .Where(df => df.factura_id == f.factura_id)
+                        .Join(_context.Detalle_Pedido,
+                            df => df.detalle_pedido_id,
+                            dp => dp.id_detalle_pedido,
+                            (df, dp) => new
+                            {
+                                DetallePedido = dp,
+                                NombreItem = dp.tipo_item == "Plato" ?
+                                    _context.platos
+                                        .Where(p => p.id == dp.item_id)
+                                        .Select(p => p.nombre)
+                                        .FirstOrDefault() :
+                                    dp.tipo_item == "Combo" ?
+                                        _context.combos
+                                            .Where(c => c.id == dp.item_id)
+                                            .Select(c => c.nombre)
+                                            .FirstOrDefault() :
+                                    _context.promociones
+                                        .Where(pr => pr.id == dp.item_id)
+                                        .Select(pr => pr.nombre)
+                                        .FirstOrDefault(),
+                                TipoItem = dp.tipo_item,
+                                Descuento = dp.tipo_item == "Promocion" ?
+                                    _context.promociones
+                                        .Where(pr => pr.id == dp.item_id)
+                                        .Select(pr => pr.descuento)
+                                        .FirstOrDefault() : 0,
+                                PrecioOriginal = dp.subtotal / (1 - (dp.tipo_item == "Promocion" ?
+                                    (_context.promociones
+                                        .Where(pr => pr.id == dp.item_id)
+                                        .Select(pr => pr.descuento)
+                                        .FirstOrDefault() / 100) : 0))
+                            }))
+                    .Where(x => x.TipoItem.ToLower() == tipoItem.ToLower())
+                    .GroupBy(x => new { x.NombreItem, x.PrecioOriginal })
+                    .Select(g => new
+                    {
+                        NombreItem = g.Key.NombreItem,
+                        PrecioUnitario = g.Key.PrecioOriginal,
+                        CantidadVendida = g.Sum(x => x.DetallePedido.cantidad),
+                        Total = g.Sum(x => x.DetallePedido.subtotal),
+                        DescuentoPromocion = tipoItem == "Promocion" ? g.First().Descuento : 0
+                    })
+                    .OrderByDescending(x => x.Total)
+                    .ToList<dynamic>();
+
+                // Generar el HTML para el PDF
+                var htmlContent = GenerarHtmlPdfVentasPorItem(ventasPorItem, tipoItem, periodoTexto);
+
+                var pdf = new HtmlToPdfDocument()
+                {
+                    GlobalSettings = {
+                PaperSize = PaperKind.A4,
+                Orientation = Orientation.Portrait,
+                Margins = new MarginSettings { Top = 10, Bottom = 10, Left = 10, Right = 10 }
+            },
+                    Objects = {
+                new ObjectSettings() {
+                    HtmlContent = htmlContent,
+                    WebSettings = { DefaultEncoding = "utf-8" }
+                }
+            }
+                };
+
+                var pdfBytes = _converter.Convert(pdf);
+                return File(pdfBytes, "application/pdf", $"VentasPor{tipoItem}_{periodo}_{DateTime.Now:yyyyMMdd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return Content($"Error al generar el PDF: {ex.Message}");
+            }
+        }
+
+        private string GenerarHtmlPdfVentasPorItem(List<dynamic> ventasPorItem, string tipoItem, string periodoTexto)
+        {
+            var html = new StringBuilder();
+
+            html.Append($@"
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ 
+            font-family: Arial, sans-serif; 
+            padding: 20px;
+            color: #333;
+        }}
+        .header {{ 
+            text-align: center; 
+            margin-bottom: 20px;
+            border-bottom: 2px solid #003653;
+            padding-bottom: 10px;
+        }}
+        h1, h2 {{ 
+            color: #003653;
+            margin: 5px 0;
+        }}
+        .report-info {{ 
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }}
+        table {{
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 15px 0;
+            font-size: 0.9em;
+        }}
+        th {{
+            background-color: #003653;
+            color: white; 
+            padding: 8px;
+            text-align: left;
+        }}
+        td {{
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }}
+        .total {{
+            text-align: right; 
+            font-weight: bold; 
+            margin: 15px 0;
+            padding: 8px;
+            background-color: #003653;
+            color: white;
+            border-radius: 5px;
+        }}
+        .footer {{
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }}
+    </style>
+</head>
+<body>
+    <div class='header'>
+        <h1>Restaurante Foodie</h1>
+        <h2>REPORTE VENTAS POR {tipoItem.ToUpper()}</h2>
+    </div>
+    
+    <div class='report-info'>
+        <p>{periodoTexto}</p>
+        <p>Reporte generado el {DateTime.Now.ToString("dd/MM/yyyy")}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre del {tipoItem.ToLower()}</th>
+                <th>Precio unitario</th>
+                <th>Cantidad vendida</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>");
+
+            decimal totalGeneral = 0;
+
+            foreach (var item in ventasPorItem)
+            {
+                html.Append($@"
+            <tr>
+                <td>{(string)item.NombreItem}</td>
+                <td>{((decimal)item.PrecioUnitario).ToString("C")}</td>
+                <td>{(int)item.CantidadVendida}</td>
+                <td>{((decimal)item.Total).ToString("C")}</td>
+            </tr>");
+
+                totalGeneral += (decimal)item.Total;
+            }
+
+            html.Append($@"
+        </tbody>
+    </table>
+
+    <div class='total'>TOTAL GENERAL: {totalGeneral.ToString("C")}</div>
+    
+    <div class='footer'>
+        Este reporte ha sido generado automáticamente por el sistema del Foodie
+    </div>
+</body>
+</html>");
+
+            return html.ToString();
+        }
     }
-
-
-
-
 }
