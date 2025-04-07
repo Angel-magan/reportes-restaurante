@@ -14,6 +14,5 @@ namespace reportes_restaurante.Models
         public string? comentarios { get; set; }
         public string estado { get; set; }
         public decimal subtotal { get; set; }
-
     }
 }

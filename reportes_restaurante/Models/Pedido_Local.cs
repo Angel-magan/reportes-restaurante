@@ -11,6 +11,5 @@ namespace reportes_restaurante.Models
         public string nombre_cliente { get; set; }
         public DateTime fechaApertura { get; set; }
         public string estado { get; set; }
-
     }
 }

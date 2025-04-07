@@ -10,6 +10,5 @@ namespace reportes_restaurante.Models
         public int cantidad { get; set; }
         public string disponibilidad { get; set; }
         public int estado { get; set; }
-
     }
 }
