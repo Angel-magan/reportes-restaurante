@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using reportes_restaurante.Models;
 using System.Data;
+using System.Text;
+using System.Globalization;
 
 
 
@@ -475,7 +477,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
 </head>
 <body>
     <div class='header'>
-        <h1>Restaurante Dulce Sabor</h1>
+        <h1>Restaurante Foodie</h1>
         <h2>Ventas locales por día</h2>
         <div class='report-date'>Reporte generado el " + DateTime.Now.ToString("dd/MM/yyyy") + @"</div>
     </div>");
@@ -960,7 +962,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
 </head>
 <body>
     <div class='header'>
-        <h1>Restaurante Dulce Sabor</h1>
+        <h1>Restaurante Foodie</h1>
         <h2>Reporte de Ventas por Rango</h2>
     </div>
     
@@ -1239,11 +1241,11 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
         .header {{ 
             text-align: center; 
             margin-bottom: 30px;
-            border-bottom: 2px solid #4CAF50;
+            border-bottom: 2px solid #003653;
             padding-bottom: 10px;
         }}
         h1, h2 {{ 
-            color: #4CAF50;
+            color: #003653;
             margin: 5px 0;
         }}
         .report-info {{ 
@@ -1273,7 +1275,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             font-size: 0.9em;
         }}
         th {{
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white; 
             padding: 8px;
             text-align: left;
@@ -1287,7 +1289,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             font-weight: bold; 
             margin-top: 10px;
             padding-top: 5px;
-            border-top: 1px solid #4CAF50;
+            border-top: 1px solid #003653;
         }}
         .total-dia {{
             text-align: right; 
@@ -1295,7 +1297,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             font-size: 1.2em; 
             margin-top: 30px;
             padding: 10px;
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white;
             border-radius: 5px;
         }}
@@ -1306,7 +1308,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             margin-top: 5px;
         }}
         .badge {{
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white;
             padding: 3px 8px;
             border-radius: 3px;
@@ -1514,11 +1516,11 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
         .header {{ 
             text-align: center; 
             margin-bottom: 20px;
-            border-bottom: 2px solid #4CAF50;
+            border-bottom: 2px solid #003653;
             padding-bottom: 10px;
         }}
         h1, h2 {{ 
-            color: #4CAF50;
+            color: #003653;
             margin: 5px 0;
         }}
         .report-info {{ 
@@ -1548,7 +1550,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             font-size: 0.9em;
         }}
         th {{
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white; 
             padding: 8px;
             text-align: left;
@@ -1563,7 +1565,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             margin: 10px 0;
             padding: 5px;
             background-color: #f5f5f5;
-            border-top: 1px solid #4CAF50;
+            border-top: 1px solid #003653;
         }}
         .total-dia {{
             text-align: right; 
@@ -1579,7 +1581,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             font-size: 1.2em; 
             margin-top: 30px;
             padding: 10px;
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white;
             border-radius: 5px;
         }}
@@ -1590,7 +1592,7 @@ public IActionResult ObtenerVentasPorDia(DateTime fecha)
             margin-top: 5px;
         }}
         .badge {{
-            background-color: #4CAF50;
+            background-color: #003653;
             color: white;
             padding: 3px 8px;
             border-radius: 3px;
