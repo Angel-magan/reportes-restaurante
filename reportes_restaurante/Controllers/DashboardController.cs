@@ -274,7 +274,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
+                .Where(x => x.detalle.tipo_item == "Plato" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
                 .Join(_context.platos,
                     dp => dp.detalle.item_id,
                     plato => plato.id,
@@ -300,7 +300,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today) // Filtrar por el rango semanal
+                .Where(x => x.detalle.tipo_item == "Plato" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today) // Filtrar por el rango semanal
                 .Join(_context.platos,
                     dp => dp.detalle.item_id,
                     plato => plato.id,
@@ -325,7 +325,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date == today) // Filtrar por día actual
+                .Where(x => x.detalle.tipo_item == "Plato" && x.pedido.fechaApertura.Date == today) // Filtrar por día actual
                 .Join(_context.platos,
                     dp => dp.detalle.item_id,
                     plato => plato.id,
@@ -347,7 +347,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Plato" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
+                .Where(x => x.detalle.tipo_item == "Plato" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
                 .Join(_context.platos,
                     dp => dp.detalle.item_id,
                     plato => plato.id,
@@ -372,7 +372,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
+                .Where(x => x.detalle.tipo_item == "Combo" && x.pedido.fechaApertura.Year == year && x.pedido.fechaApertura.Month == month)
                 .Join(_context.combos,
                     dp => dp.detalle.item_id,
                     combo => combo.id,
@@ -397,7 +397,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today)
+                .Where(x => x.detalle.tipo_item == "Combo" && x.pedido.fechaApertura.Date >= startOfWeek && x.pedido.fechaApertura.Date <= today)
                 .Join(_context.combos,
                     dp => dp.detalle.item_id,
                     combo => combo.id,
@@ -421,7 +421,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date == today)
+                .Where(x => x.detalle.tipo_item == "Combo" && x.pedido.fechaApertura.Date == today)
                 .Join(_context.combos,
                     dp => dp.detalle.item_id,
                     combo => combo.id,
@@ -444,7 +444,7 @@ namespace reportes_restaurante.Controllers
                     detalle => detalle.encabezado_id,
                     pedido => pedido.id_pedido,
                     (detalle, pedido) => new { detalle, pedido })
-                .Where(x => x.detalle.tipo_Item == "Combo" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
+                .Where(x => x.detalle.tipo_item == "Combo" && x.pedido.fechaApertura.Date >= startDate && x.pedido.fechaApertura.Date <= endDate)
                 .Join(_context.combos,
                     dp => dp.detalle.item_id,
                     combo => combo.id,
