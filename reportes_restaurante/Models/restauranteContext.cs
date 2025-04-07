@@ -12,6 +12,10 @@ namespace reportes_restaurante.Models
         public DbSet<empleados> empleados { get; set; }
         public DbSet<cargo> cargo { get; set; }
         public DbSet<Pedido_Local> Pedido_Local { get; set; }
+        public DbSet<combos> combos { get; set; } // Cambiado a 'combos'
+        public DbSet<platos> platos { get; set; } // Cambiado a 'categoria'
+
+        
 
         public DbSet<Detalle_Pedido> Detalle_Pedido { get; set; }
 

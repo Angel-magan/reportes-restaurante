@@ -6,17 +6,17 @@ namespace reportes_restaurante.Controllers
 {
     public class DashboardController : Controller
     {
-  
-      private readonly restauranteContext _context;
+
+        private readonly restauranteContext _context;
 
 
-      public DashboardController (restauranteContext context)
-      {
+        public DashboardController(restauranteContext context)
+        {
 
-          _context = context;
+            _context = context;
 
 
-      }
+        }
 
         public IActionResult Index()
         {
@@ -90,7 +90,7 @@ namespace reportes_restaurante.Controllers
 
 
 
-    
+
 
 
             return View();
@@ -148,7 +148,67 @@ namespace reportes_restaurante.Controllers
             return Json(new { ventas });
         }
 
+        [HttpGet]
+        public IActionResult ObtenerTopPlatos()
+        {
+            // Primero obtenemos todos los detalles de los pedidos con tipo "Plato"
+            var topPlatos = _context.Detalle_Pedido
+                .Where(dp => dp.tipo_Item == "Plato")
+                .Join(_context.platos, dp => dp.item_id, plato => plato.id,
+                    (dp, plato) => new
+                    {
+                        PlatoId = plato.id,
+                        Nombre = plato.nombre,
+                        CantidadVendida = dp.cantidad
+                    })
+                .AsEnumerable()  // Convertimos a memoria para hacer la agrupación y la suma en el cliente
+                .GroupBy(x => new { x.PlatoId, x.Nombre })
+                .Select(g => new
+                {
+                    PlatoId = g.Key.PlatoId,
+                    Nombre = g.Key.Nombre,
+                    TotalVendidos = g.Sum(x => x.CantidadVendida)
+                })
+                .OrderByDescending(x => x.TotalVendidos)  // Ordenamos por el total vendido de forma descendente
+                .Take(5)  // Tomamos los 5 primeros
+                .ToList();
+
+            return Json(topPlatos);
+        }
+
+
+        [HttpGet]
+        public IActionResult ObtenerTopCombos()
+        {
+            // Primero obtenemos todos los detalles de los pedidos con tipo "Combo"
+            var topCombos = _context.Detalle_Pedido
+                .Where(dp => dp.tipo_Item == "Combo")
+                .Join(_context.combos, dp => dp.item_id, combo => combo.id,
+                    (dp, combo) => new
+                    {
+                        ComboId = combo.id,
+                        Nombre = combo.nombre,
+                        CantidadVendida = dp.cantidad
+                    })
+                .AsEnumerable()  // Convertimos a memoria para hacer la agrupación y la suma en el cliente
+                .GroupBy(x => new { x.ComboId, x.Nombre })
+                .Select(g => new
+                {
+                    ComboId = g.Key.ComboId,
+                    Nombre = g.Key.Nombre,
+                    TotalVendidos = g.Sum(x => x.CantidadVendida)
+                })
+                .OrderByDescending(x => x.TotalVendidos)  // Ordenamos por el total vendido de forma descendente
+                .Take(5)  // Tomamos los 5 primeros
+                .ToList();
+
+            return Json(topCombos);
+        }
+
+
 
 
     }
+
 }
+

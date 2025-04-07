@@ -100,7 +100,7 @@
         
 
         <div class="mt-5">
-			<p class="fw-bold">GRAFICO DE VENTAS</p>
+			<p class="fw-bold">VENTAS POR MES</p>
 			
             <canvas id="ventasChart">
 
@@ -111,6 +111,24 @@
     </div>
 
 </div>
+
+    <div class="container">
+        <div class="mt-5">
+            <div class="row">
+                <!-- Gráfico de Platos -->
+                <div class="col-md-6">
+                    <p class="fw-bold">Top 5 platos más vendidos</p>
+                    <canvas id="platosChart" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Gráfico de Combos -->
+                <div class="col-md-6">
+                    <p class="fw-bold">Top 5 combos más vendidos</p>
+                    <canvas id="combosChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 <script>
@@ -189,9 +207,114 @@
             });
         });
 
-
-
-       
-
-
 </script>
+
+
+    <script>
+        $(document).ready(function () {
+            // Llamar a la función para cargar los datos al cargar la página
+            cargarGraficoPlatos();
+
+            function cargarGraficoPlatos() {
+                $.get('/Dashboard/ObtenerTopPlatos', function (data) {
+                    console.log(data);  // Verificar los datos que se reciben
+
+                    // Verificamos que los datos sean correctos
+                    if (data.length === 0) {
+                        console.log("No hay datos para mostrar en el gráfico.");
+                        return;
+                    }
+
+                    // Extraer los datos que necesitamos para la gráfica
+                    var labels = data.map(function (item) { return item.nombre; });  // Usamos 'nombre' en vez de 'Nombre'
+                    var dataPlatos = data.map(function (item) { return item.totalVendidos; });  // Usamos 'totalVendidos' en vez de 'TotalVendidos'
+
+                    // Crear el gráfico de pastel
+                    var ctx = document.getElementById('platosChart').getContext('2d');
+                    var pieChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,  // Los nombres de los platos
+                            datasets: [{
+                                data: dataPlatos,  // Los totales vendidos de cada plato
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],  // Colores para cada sección
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';  // Mostrar el total vendido con el nombre del plato
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }).fail(function () {
+                    console.log("Error al obtener los datos para el gráfico.");
+                });
+            }
+        });
+    </script>
+
+
+    <script>
+        $(document).ready(function () {
+            // Llamar a la función para cargar los datos de los combos al cargar la página
+            cargarGraficoCombos();
+
+            function cargarGraficoCombos() {
+                $.get('/Dashboard/ObtenerTopCombos', function (data) {
+                    console.log(data);  // Verificar los datos que se reciben
+
+                    // Verificamos que los datos sean correctos
+                    if (data.length === 0) {
+                        console.log("No hay datos para mostrar en el gráfico.");
+                        return;
+                    }
+
+                    // Extraer los datos que necesitamos para la gráfica
+                    var labels = data.map(function (item) { return item.nombre; });  // Usamos 'nombre' para los combos
+                    var dataCombos = data.map(function (item) { return item.totalVendidos; });  // Usamos 'totalVendidos'
+
+                    // Crear el gráfico de pastel
+                    var ctx = document.getElementById('combosChart').getContext('2d');
+                    var pieChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,  // Los nombres de los combos
+                            datasets: [{
+                                data: dataCombos,  // Los totales vendidos de cada combo
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],  // Colores para cada sección
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';  // Mostrar el total vendido con el nombre del combo
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }).fail(function () {
+                    console.log("Error al obtener los datos para el gráfico.");
+                });
+            }
+        });
+    </script>
+
+
