@@ -2,8 +2,7 @@
     ViewData["Title"] = "Reportes";
 }
 <head>
-    <!-- Otros enlaces de cabecera y recursos -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  <!-- Cargar jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -12,9 +11,12 @@
         <div>
             <a href="/" class="btn text-black mb-2" style="background-color: #ffd734">DASHBOARD</a>
             <a href="@Url.Action("DashboardReportes", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">PEDIDOS</a>
+            <a href="@Url.Action("ReportesPdf", "Reportes")" class="btn text-black mb-2" style="background-color: #ffd734">GENERAR MAS REPORTES</a>
         </div>
         <div class="d-flex flex-md-row flex-column align-items-md-center justify-content-between">
             <div class="d-flex flex-column flex-md-row me-md-3 w-100 w-md-auto">
+                
+
                 <div class="me-md-3 mb-2 mb-md-0">
                     <label for="fechaInicio">Fecha inicio:</label>
                     <input type="date" id="fechaInicio" name="fechaInicio" class="form-control">
@@ -73,35 +75,26 @@
         <hr style="height: 2px" />
     </section>
     <button id="btnDescargarPdf" class="btn text-light mb-2 d-block mx-auto" style="background-color: #af1717">Descargar PDF</button>
+   
+
+
+
 </div>
 
 <script>
     $(document).ready(function () {
         var chartInstance;
         var barChartInstance;
-        var tipoVentaSeleccionado = 'LOCAL'; // Tipo de venta por defecto
-        var periodoSeleccionado = 'mensual'; // Periodo por defecto
-        var yearSeleccionado = new Date().getFullYear(); // Año por defecto
+        var tipoVentaSeleccionado = 'LOCAL';
+        var periodoSeleccionado = 'mensual';
+        var yearSeleccionado = new Date().getFullYear();
         var fechaInicioSeleccionada = null;
         var fechaFinSeleccionada = null;
-        var nombreEmpleadoSeleccionado = ''; // Variable global para almacenar el nombre del empleado
+        var nombreEmpleadoSeleccionado = '';
 
         function cargarGraficoVentas(year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado) {
-            console.log("cargarGraficoVentas called with:", { year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado });
+            // console.log("cargarGraficoVentas called with:", { year, fechaInicio, fechaFin, tipoVenta, periodo, nombreEmpleado });
             $.get('/Reportes/ObtenerVentasPorPeriodo', { year: year, fechaInicio: fechaInicio, fechaFin: fechaFin, tipoVenta: tipoVenta, periodo: periodo, nombreEmpleado: nombreEmpleado }, function (data) {
-                console.log(data); // Agregar esta línea para depuración
-
-                if (data.Message) {
-                    console.log(data.Message);
-                    alert(data.Message);
-                    return;
-                }
-
-                if (!Array.isArray(data.ventas)) {
-                    console.error("Expected an array but got:", data.ventas);
-                    alert("Error: Expected an array but got an invalid response.");
-                    return;
-                }
 
                 var periodos = data.ventas.map(function (item) { return item.periodo; });
                 var totales = data.ventas.map(function (item) { return item.totalVendido; });
@@ -171,7 +164,6 @@
             });
         }
 
-        // Cargar gráfico con el año actual y ventas locales al cargar la página
         cargarGraficoVentas(yearSeleccionado, null, null, tipoVentaSeleccionado, periodoSeleccionado, null);
 
         // Manejar el evento de cambio de año
@@ -181,10 +173,10 @@
             $('#fechaFin').val('');
             fechaInicioSeleccionada = null;
             fechaFinSeleccionada = null;
-            $('#nombreEmpleado').val(''); // Limpiar el campo del nombre del empleado
-            nombreEmpleadoSeleccionado = ''; // Limpiar la variable global
+            $('#nombreEmpleado').val('');
+            nombreEmpleadoSeleccionado = '';
             if (!yearSeleccionado) {
-                yearSeleccionado = new Date().getFullYear(); // Si el input de año está vacío, usar el año actual
+                yearSeleccionado = new Date().getFullYear();
             }
             cargarGraficoVentas(yearSeleccionado, null, null, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
         });
@@ -238,15 +230,20 @@
             }
         });
 
-        // Manejar el evento de presionar Enter en el campo de nombre del empleado
-        $('#nombreEmpleado').on('keypress', function (e) {
-            if (e.which == 13) { // Enter key pressed
-                console.log("Enter key pressed in nombreEmpleado input");
-                nombreEmpleadoSeleccionado = $(this).val(); // Actualizar la variable global
-                $('#inputYear').val(''); // Limpiar el campo del año
-                yearSeleccionado = null; // Limpiar la variable global del año
-                cargarGraficoVentas(null, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
+        $('#nombreEmpleado').on('input', function () {
+            // console.log("Input event in nombreEmpleado input");
+            nombreEmpleadoSeleccionado = $(this).val();
+            $('#fechaInicio').val('');
+            $('#fechaFin').val('');
+            fechaInicioSeleccionada = null;
+            fechaFinSeleccionada = null;
+            if (!nombreEmpleadoSeleccionado) {
+                yearSeleccionado = new Date().getFullYear();
+            } else {
+                $('#inputYear').val('');
+                yearSeleccionado = null;
             }
+            cargarGraficoVentas(yearSeleccionado, fechaInicioSeleccionada, fechaFinSeleccionada, tipoVentaSeleccionado, periodoSeleccionado, nombreEmpleadoSeleccionado);
         });
 
         // Manejar el evento de clic en el botón Descargar PDF
@@ -263,3 +260,6 @@
         });
     });
 </script>
+<script src="~/js/ventasPorDia.js"></script>
+<script src="~/js/ventasPorMes.js"></script>
+<script src="~/js/ventasPorRango.js"></script>
