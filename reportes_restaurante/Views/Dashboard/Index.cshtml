@@ -1,0 +1,430 @@
+﻿
+<head>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+
+
+<div class="container">
+
+
+    <div class="d-flex align-items-center gap-3 mt-3">
+        <!-- Botones DASHBOARD y PEDIDOS -->
+        <a href="/" class="btn text-black" style="background-color: #ffd734">DASHBOARD</a>
+        <a href="/" class="btn text-black" style="background-color: #ffd734">PEDIDOS</a>
+
+        <!-- Espaciador grande -->
+        <div class="ms-auto"></div>
+
+        <!-- Botones para rangos -->
+        <div class="d-flex gap-2">
+            <button class= "btn text-black" id="mensualBtn" style="background-color: #ffd734">MENSUAL</button>
+            <button class="btn text-black" id="semanalBtn" style="background-color: #ffd734">SEMANAL</button>
+            <button class="btn text-black" id="hoyBtn" style="background-color: #ffd734">HOY</button>
+            <button class="btn text-white"id="mostrarBtn" style="background-color: #800000">MOSTRAR</button>
+        </div>
+
+        <!-- Selector de rango de fechas -->
+        <div>
+            <label for="startDate" class="form-label mb-0">Fecha Inicio:</label>
+            <input type="date" id="startDate" class="form-control">
+        </div>
+        <div>
+            <label for="endDate" class="form-label mb-0">Fecha Fin:</label>
+            <input type="date" id="endDate" class="form-control">
+        </div>
+    </div>
+
+
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center">
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.MesasOcupadas</p>
+                <p class="fw-bold">MESAS OCUPADAS</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosAbiertos</p>
+                <p class="fw-bold">PEDIDOS ABIERTOS</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosEnProceso</p>
+                <p class="fw-bold">PEDIDOS EN PROCESO</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosPendientes</p>
+                <p class="fw-bold">PEDIDOS PENDIENTES</p>
+            </section>
+            <section class="text-center border border-1 rounded-3 p-2">
+                <p><i class="bi bi-clock fs-3 fw-bold"></i></p>
+                <p>@ViewBag.PedidosFinalizados</p>
+                <p class="fw-bold">PEDIDOS FINALIZADOS</p>
+            </section>
+
+        </div>
+    </div>
+
+
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <!-- Ingresos Totales Locales -->
+        <button id="ingresosLocales" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES LOCALES<br>@ViewBag.IngresosLocales.ToString("C")
+        </button>
+
+        <!-- Ingresos Totales en Línea -->
+        <button id="ingresosEnLinea" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES EN LÍNEA<br>@ViewBag.IngresosEnLinea.ToString("C")
+        </button>
+
+        <!-- Ingresos Totales Ambos -->
+        <button id="ingresosTotales" class="btn text-black fw-bold px-4 py-2" style="background-color: #ffd734; width: 30%;">
+            INGRESOS TOTALES AMBOS<br>@ViewBag.IngresosTotales.ToString("C") 
+        </button>
+    </div>
+
+
+
+
+    <!-- Primera grafica-->
+    <div class="container">
+        
+
+        <div class="mt-5">
+			<p class="fw-bold">VENTAS POR MES</p>
+			
+            <canvas id="ventasChart">
+
+				
+            </canvas>
+
+
+    </div>
+
+</div>
+
+    <div class="container">
+        <div class="mt-5">
+            <div class="row">
+                <!-- Gráfico de Platos -->
+                <div class="col-md-6">
+                    <p class="fw-bold">Top 5 platos más vendidos</p>
+                    <canvas id="platosChart" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Gráfico de Combos -->
+                <div class="col-md-6">
+                    <p class="fw-bold">Top 5 combos más vendidos</p>
+                    <canvas id="combosChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+<script>
+        $(document).ready(function () {
+            function actualizarIngresos(data) {
+                // Actualizar los botones con los ingresos obtenidos
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        });
+                $("#ingresosLocales").html(`INGRESOS TOTALES LOCALES<br>${formatter.format(data.ingresosLocales)}`);
+                $("#ingresosEnLinea").html(`INGRESOS TOTALES EN LÍNEA<br>${formatter.format(data.ingresosEnLinea)}`);
+                $("#ingresosTotales").html(`INGRESOS TOTALES AMBOS<br>${formatter.format(data.ingresosTotales)}`);
+            }
+
+            // Lógica para cargar los ingresos del mes por defecto
+            var today = new Date();
+            var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+            var currentYear = today.getFullYear(); // Año actual
+
+            $.get('/Dashboard/ObtenerIngresosPorMes', { year: currentYear, month: currentMonth }, function (data) {
+                actualizarIngresos(data);
+            });
+
+            // Evento para "Mensual"
+            $("#mensualBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorMes', { year: currentYear, month: currentMonth }, function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Semanal"
+            $("#semanalBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorSemana', function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Hoy"
+            $("#hoyBtn").click(function () {
+                $.get('/Dashboard/ObtenerIngresosPorDia', function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+
+            // Evento para "Mostrar"
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+
+                $.get('/Dashboard/ObtenerIngresosPorRango', { startDate, endDate }, function (data) {
+                    actualizarIngresos(data);
+                });
+            });
+        });
+
+</script>
+
+
+<script>
+        $(document).ready(function () {
+
+                    // Lógica para cargar las ventas por día automáticamente
+        var today = new Date();
+        var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+        var currentYear = today.getFullYear(); // Año actual
+
+        // Llamada automática al cargar la página
+        $.get('/Dashboard/ObtenerVentasPorDia', { year: currentYear, month: currentMonth }, function (data) {
+            const labels = data.ventas.map(v => v.fecha); // Días del mes
+            const valores = data.ventas.map(v => v.totalVendido); // Ventas totales por día
+
+            actualizarGrafica(labels, valores, "Ventas Mensuales");
+        });
+
+
+            function actualizarGrafica(labels, data, label) {
+                var ctx = document.getElementById('ventasChart').getContext('2d');
+
+                // Destruir la instancia del gráfico existente si ya está creado
+                if (window.chartInstance) {
+                    window.chartInstance.destroy();
+                }
+
+                // Crear el gráfico
+                window.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels, // Etiquetas (días u horas)
+                        datasets: [{
+                            label: label, // Etiqueta del gráfico
+                            data: data, // Ventas
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderWidth: 2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Evento para "Mensual"
+        $("#mensualBtn").click(function () {
+            // Obtener el mes y el año actual
+            var today = new Date();
+            var currentMonth = today.getMonth() + 1; // Mes actual (1 a 12)
+            var currentYear = today.getFullYear(); // Año actual
+
+            // Llamada AJAX al método corregido del controlador
+            $.get('/Dashboard/ObtenerVentasPorDia', { year: currentYear, month: currentMonth }, function (data) {
+                const labels = data.ventas.map(v => v.fecha); // Días del mes
+                const valores = data.ventas.map(v => v.totalVendido); // Ventas totales por día
+
+                actualizarGrafica(labels, valores, "Ventas Mensuales");
+            });
+        });
+
+
+            // Evento para "Semanal"
+            $("#semanalBtn").click(function () {
+                $.get('/Dashboard/ObtenerVentasPorSemana', function (data) {
+                    const labels = data.ventas.map(v => v.fecha);
+                    const valores = data.ventas.map(v => v.totalVendido);
+
+                    actualizarGrafica(labels, valores, "Ventas Semanales");
+                });
+            });
+
+            // Evento para "Hoy"
+            $("#hoyBtn").click(function () {
+                $.get('/Dashboard/ObtenerVentasPorHora', function (data) {
+                    const labels = data.ventas.map(v => v.hora);
+                    const valores = data.ventas.map(v => v.totalVendido);
+
+                    actualizarGrafica(labels, valores, "Ventas por Hora (Hoy)");
+                });
+            });
+
+            // Evento para "Mostrar"
+            $("#mostrarBtn").click(function () {
+                const startDate = $("#startDate").val();
+                const endDate = $("#endDate").val();
+
+                $.get('/Dashboard/ObtenerVentasPorRango', { startDate, endDate }, function (data) {
+                    const labels = data.ventas.map(v => v.fecha);
+                    const valores = data.ventas.map(v => v.totalVendido);
+
+                    actualizarGrafica(labels, valores, `Ventas del ${startDate} al ${endDate}`);
+                });
+            });
+        });
+
+</script>
+
+
+    <script>
+              $(document).ready(function () {
+            function cargarGraficoPlatos(url) {
+                $.get(url, function (data) {
+                    var labels = data.map(item => item.nombre);
+                    var values = data.map(item => item.totalVendidos);
+
+                    var ctx = document.getElementById('platosChart').getContext('2d');
+                    if (window.chartPlatos) {
+                        window.chartPlatos.destroy();
+                    }
+                    window.chartPlatos = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Botones
+            $("#mensualBtn").click(function () {
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = today.getMonth() + 1;
+                cargarGraficoPlatos(`/Dashboard/ObtenerTopPlatosMensual?year=${year}&month=${month}`);
+            });
+
+            $("#semanalBtn").click(function () {
+                cargarGraficoPlatos('/Dashboard/ObtenerTopPlatosSemanal');
+            });
+
+            $("#hoyBtn").click(function () {
+                cargarGraficoPlatos('/Dashboard/ObtenerTopPlatosHoy');
+            });
+
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+                cargarGraficoPlatos(`/Dashboard/ObtenerTopPlatosRango?startDate=${startDate}&endDate=${endDate}`);
+            });
+
+            // Carga inicial (Mensual)
+            $("#mensualBtn").click();
+        });
+    </script>
+
+
+
+
+    <script>
+                $(document).ready(function () {
+            function cargarGraficoCombos(url) {
+                $.get(url, function (data) {
+                    var labels = data.map(item => item.nombre);
+                    var values = data.map(item => item.totalVendidos);
+
+                    var ctx = document.getElementById('combosChart').getContext('2d');
+                    if (window.chartCombos) {
+                        window.chartCombos.destroy();
+                    }
+                    window.chartCombos = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF5733'],
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'top' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            return tooltipItem.label + ': ' + tooltipItem.raw + ' vendidos';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Botones
+            $("#mensualBtn").click(function () {
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = today.getMonth() + 1;
+                cargarGraficoCombos(`/Dashboard/ObtenerTopCombosMensual?year=${year}&month=${month}`);
+            });
+
+            $("#semanalBtn").click(function () {
+                cargarGraficoCombos('/Dashboard/ObtenerTopCombosSemanal');
+            });
+
+            $("#hoyBtn").click(function () {
+                cargarGraficoCombos('/Dashboard/ObtenerTopCombosHoy');
+            });
+
+            $("#mostrarBtn").click(function () {
+                var startDate = $("#startDate").val();
+                var endDate = $("#endDate").val();
+                cargarGraficoCombos(`/Dashboard/ObtenerTopCombosRango?startDate=${startDate}&endDate=${endDate}`);
+            });
+
+            // Carga inicial (Mensual)
+            $("#mensualBtn").click();
+        });
+
+
+    </script>
+
