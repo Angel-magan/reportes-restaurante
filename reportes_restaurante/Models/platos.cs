@@ -12,6 +12,5 @@ namespace reportes_restaurante.Models
         public string imagen { get; set; }
         public int categoria_id { get; set; }
         public int estado { get; set; }
-
     }
 }
