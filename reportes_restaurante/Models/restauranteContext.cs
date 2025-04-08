@@ -17,6 +17,7 @@ namespace reportes_restaurante.Models
         public DbSet<mesas> mesas { get; set; }
         public DbSet<platos> platos { get; set; }
         public DbSet<combos> combos { get; set; }
+        public DbSet<promociones> promociones { get; set; }
 
         //es una función de sql server para obtener semanas por mes 
         [DbFunction("GetIsoWeek", "dbo")]

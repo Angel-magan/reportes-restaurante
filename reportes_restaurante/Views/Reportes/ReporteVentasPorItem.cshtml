@@ -1,0 +1,111 @@
+﻿@model dynamic
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Restaurante Foodie - Ventas por @Model.TipoItem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #003653;
+            padding-bottom: 10px;
+        }
+
+        h1, h2 {
+            color: #003653;
+            margin: 5px 0;
+        }
+
+        .report-info {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: #003653;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .total {
+            text-align: right;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 8px;
+            background-color: #003653;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Restaurante Foodie</h1>
+        <h2>REPORTE VENTAS POR @Model.TipoItem.ToUpper()</h2>
+    </div>
+
+    <div class="report-info">
+        <p>@Model.PeriodoTexto</p>
+        <p>Reporte generado el @Model.FechaReporte</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre del @Model.TipoItem.ToLower()</th>
+                <th>Precio unitario</th>
+                <th>Cantidad vendida</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.VentasPorItem)
+            {
+                <tr>
+                    <td>@item.NombreItem</td>
+                    <td>$@item.PrecioUnitario.ToString("N2")</td>
+                    <td>@item.CantidadVendida</td>
+                    <td>$@item.Total.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="total">TOTAL GENERAL: $@Model.TotalGeneral.ToString("N2")</div>
+
+    <div class="footer">
+        Este reporte ha sido generado automáticamente por el sistema del Restaurante Foodie
+    </div>
+</body>
+</html>

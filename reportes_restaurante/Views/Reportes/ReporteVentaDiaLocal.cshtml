@@ -1,0 +1,146 @@
+﻿@model dynamic
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Restaurante Foodie - Ventas del día</title>
+    <style>
+        body {
+
+        
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+        }
+
+        
+
+        h1, h2 {
+
+        
+            color: #af1717;
+            border-bottom: 2px solid #af1717;
+            padding-bottom: 5px;
+        }
+
+       
+
+        table {
+
+        
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        
+
+        th {
+
+        
+            background-color: #af1717;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+
+        
+
+        td {
+
+        
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .total-cuenta {
+
+        
+            text-align: right;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 5px;
+            background-color: #f5f5f5;
+        }
+
+        
+
+        .separador {
+
+        
+            border-top: 2px dashed #af1717;
+            margin: 20px 0;
+        }
+
+        
+
+        .encabezado-reporte {
+
+        
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+     
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Restaurante Foodie</h1>
+        <h2>Ventas del día @Model.Fecha.ToString("dd/MM/yyyy")</h2>
+        <div class="report-date">Reporte generado el @Model.FechaReporte</div>
+    </div>
+
+    @foreach (var venta in Model.Ventas)
+    {
+        <div class="venta">
+            <div class="cliente-info">
+                <strong>Cliente:</strong> @venta.Factura.cliente_nombre<br>
+                <strong>Atendió:</strong> @venta.Empleado?.nombre @venta.Empleado?.apellido
+                @if (venta.Mesa != null)
+                {
+                    <br>
+
+                    <strong>Mesa:</strong> @venta.Mesa
+                }
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Platillo</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detalle in venta.Detalles)
+                    {
+                        <tr>
+                            <td>@detalle.NombreItem</td>
+                            <td>@detalle.tipo_item</td>
+                            <td>@detalle.cantidad</td>
+                            <td>$@detalle.PrecioUnitario.ToString("N2")</td>
+                            <td>$@detalle.subtotal.ToString("N2")</td>
+                        </tr>
+                        @if (!string.IsNullOrEmpty(detalle.comentarios))
+                        {
+                            <tr>
+                                <td colspan="5" class="comentarios">
+                                    <strong>Notas:</strong> @detalle.comentarios
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            <div class="total-venta">TOTAL FACTURA: $@venta.Factura.total.ToString("N2")</div>
+        </div>
+    }
+
+    <div class="total-dia">TOTAL DEL DÍA: $@Model.TotalDia.ToString("N2")</div>
+</body>
+</html>
